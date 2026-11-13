@@ -7,13 +7,13 @@
   // mode: fall = fällt von oben, rise = steigt von unten auf
   const OVERLAYS = [
     { id: '', name: 'Standard', emoji: '🏠' },
-    { id: 'weihnachten', name: 'Weihnachten', emoji: '🎄', snow: true }, // echter Schneefall (Canvas) + Schnee auf den Buttons (CSS)
-    { id: 'silvester', name: 'Silvester', emoji: '🎆', fireworks: true }, // echtes Feuerwerk (Canvas), keine Emojis
-    { id: 'valentin', name: 'Valentinstag', emoji: '💘', mode: 'rise', items: ['💘', '💖', '💕', '❤️'] },
-    { id: 'karneval', name: 'Karneval', emoji: '🎭', mode: 'fall', items: ['🎭', '🎈', '🎊', '🥳'] },
-    { id: 'ostern', name: 'Ostern', emoji: '🐣', mode: 'fall', items: ['🐣', '🥚', '🐰', '🌷'] },
-    { id: 'oktoberfest', name: 'Oktoberfest', emoji: '🍺', mode: 'rise', items: ['🍺', '🥨', '🍻'] },
-    { id: 'halloween', name: 'Halloween', emoji: '🎃', mode: 'fall', items: ['🎃', '🦇', '👻', '🕷️'] },
+    { id: 'weihnachten', name: 'Weihnachten', emoji: '🎄' },
+    { id: 'silvester', name: 'Silvester', emoji: '🎆', fireworks: true }, // Feuerwerk (Canvas) + Glitzer
+    { id: 'valentin', name: 'Valentinstag', emoji: '💘' },
+    { id: 'karneval', name: 'Karneval', emoji: '🎭' },
+    { id: 'ostern', name: 'Ostern', emoji: '🐣' },
+    { id: 'oktoberfest', name: 'Oktoberfest', emoji: '🍺' },
+    { id: 'halloween', name: 'Halloween', emoji: '🎃' },
   ];
 
   const $ = s => document.querySelector(s);
@@ -121,99 +121,130 @@
   })();
 
 
-  /* ---------- Schneefall (Weihnachten): mehrere Tiefenebenen, Windböen, Schneewehe am Boden, Schnee-Puff beim Klicken ---------- */
-  const SNOW = (() => {
-    let back = null, front = null, bctx = null, fctx = null, raf = 0, w = 0, h = 0, dpr = 1, last = 0, t = 0;
-    let flakes = [], puffs = [];
+  /* ---------- Fest-Effekte (Canvas): Schneefall, Herzen, Konfetti, Blütenblätter, Bierbläschen, Glut + Fledermäuse, Glitzer ---------- */
+  const FXT = {
+    weihnachten: { shape: 'soft', n: 1, s: [1.6, 10], v: [24, 94], burst: 'soft' },
+    valentin: { shape: 'heart', cols: ['#ff4d79', '#ff8fab', '#ff2e63', '#ffc2d1', '#e11d48'], up: 1, n: 0.3, s: [7, 20], v: [30, 80], burst: 'heart' },
+    karneval: { shape: 'conf', cols: ['#ff2bd6', '#ffd400', '#2dd4ff', '#7cff4a', '#ff7a1a', '#a855f7'], n: 0.8, s: [2.5, 6], v: [40, 110], burst: 'conf' },
+    ostern: { shape: 'petal', cols: ['#ffc9e3', '#fff0a0', '#c6f0c0', '#cfe3ff', '#ffd0b0'], n: 0.5, s: [4, 9], v: [22, 60], burst: 'petal' },
+    oktoberfest: { shape: 'bubble', cols: ['255,205,70', '255,230,140'], up: 1, n: 0.6, s: [2, 9], v: [30, 90], burst: 'bubble' },
+    halloween: { shape: 'soft', rgb: '255,140,30', up: 1, n: 0.4, s: [2, 7], v: [14, 40], bats: 6, burst: 'soft' },
+    silvester: { shape: 'glit', cols: ['#ffd700', '#fff3b0', '#e8e8ff', '#ffb300'], n: 0.45, s: [1.2, 3], v: [25, 70], burst: 'glit' },
+  };
+  // Boden: [Farbe, Höhe, Frequenz, Phase] – hinten nach vorne; l = Hell-Modus
+  const GROUND = {
+    weihnachten: { d: [['rgba(175,200,235,.30)', 46, 0.007, 1.3], ['rgba(225,238,255,.5)', 32, 0.011, 3], ['rgba(255,255,255,.92)', 20, 0.016, 0.4]],
+      l: [['rgba(130,165,215,.35)', 46, 0.007, 1.3], ['rgba(150,185,230,.55)', 32, 0.011, 3], ['rgba(170,200,240,.85)', 20, 0.016, 0.4]], glint: 1 },
+    ostern: { d: [['rgba(110,200,120,.35)', 46, 0.007, 0.7], ['rgba(80,180,95,.6)', 32, 0.011, 2], ['rgba(50,150,70,.95)', 20, 0.016, 5]] },
+    oktoberfest: { d: [['rgba(255,214,102,.3)', 46, 0.007, 0.9], ['rgba(255,240,200,.6)', 32, 0.011, 2.5], ['rgba(255,253,245,.95)', 20, 0.016, 4]] },
+  };
+  const FX = (() => {
+    let back = null, front = null, bctx = null, fctx = null, raf = 0, w = 0, h = 0, dpr = 1, last = 0, t = 0, id = '', cfg = null;
+    let ps = [], puffs = [], bats = [], glints = [];
     const sprites = {};
-    const rnd = (a, b) => a + Math.random() * (b - a);
+    const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
     const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
-
-    function sprite(kind) { // weiche Schneeflocke, einmal vorgezeichnet
-      if (sprites[kind]) return sprites[kind];
+    function sprite(rgb) {
+      if (sprites[rgb]) return sprites[rgb];
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-      if (kind === 'light') { gr.addColorStop(0, 'rgba(110,155,220,.95)'); gr.addColorStop(0.45, 'rgba(135,175,235,.5)'); gr.addColorStop(1, 'rgba(160,195,240,0)'); }
-      else { gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.65)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); }
+      gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.4, `rgba(${rgb},.6)`); gr.addColorStop(1, `rgba(${rgb},0)`);
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
-      return (sprites[kind] = c);
+      return (sprites[rgb] = c);
     }
-    function makeCanvas(id) { const c = document.createElement('canvas'); c.id = id; c.setAttribute('aria-hidden', 'true'); return c; }
+    function makeCanvas(cid) { const c = document.createElement('canvas'); c.id = cid; c.setAttribute('aria-hidden', 'true'); return c; }
+    function mk(first) {
+      const d = Math.pow(Math.random(), 1.6), up = cfg.up ? -1 : 1;
+      return { x: rnd(0, w), y: first ? rnd(-20, h) : (up < 0 ? h + 20 : -20), d, front: d > 0.9,
+        s: cfg.s[0] + (cfg.s[1] - cfg.s[0]) * d * d, vy: (cfg.v[0] + (cfg.v[1] - cfg.v[0]) * d) * up, a: 0.3 + d * 0.55,
+        ph: rnd(0, 6.28), fr: rnd(0.6, 1.6), amp: rnd(5, 20), rot: rnd(0, 6.28), vr: rnd(-2.5, 2.5), col: cfg.cols ? pick(cfg.cols) : null };
+    }
+    function mkBat(first) { const dir = Math.random() < 0.5 ? 1 : -1; return { x: first ? rnd(0, w) : (dir > 0 ? -40 : w + 40), y: rnd(h * 0.08, h * 0.6), s: rnd(9, 18), vx: dir * rnd(50, 110), ph: rnd(0, 6), dir }; }
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = window.innerWidth; h = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2); w = window.innerWidth; h = window.innerHeight;
       for (const [c, x] of [[back, bctx], [front, fctx]]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0); }
-      initFlakes();
+      const n = Math.round(Math.min(240, Math.max(70, (w * h) / 8500)) * cfg.n * (w < 600 ? 0.65 : 1));
+      ps = Array.from({ length: n }, () => mk(true));
+      bats = Array.from({ length: cfg.bats || 0 }, () => mkBat(true));
+      glints = Array.from({ length: 26 }, () => ({ x: rnd(0, w), y: h - rnd(2, 26), p: rnd(0, 6.28) }));
     }
-    function initFlakes() {
-      const n = Math.round(Math.min(240, Math.max(70, (w * h) / 8500)) * (w < 600 ? 0.65 : 1));
-      flakes = [];
-      for (let i = 0; i < n; i++) {
-        const d = Math.pow(Math.random(), 1.6); // 0 = weit weg (klein, langsam), 1 = nah (groß, schnell)
-        flakes.push({ x: rnd(0, w), y: rnd(-20, h), d, front: d > 0.9,
-          s: 1.6 + d * d * 8.5, vy: 24 + d * 70 + rnd(-6, 6), a: 0.3 + d * 0.55,
-          ph: rnd(0, 6.28), fr: rnd(0.6, 1.6), amp: rnd(5, 20) });
+    function shape(g, k, s, col, ph) {
+      if (k === 'heart') { g.fillStyle = col; g.beginPath(); g.moveTo(0, -s * 0.15); g.bezierCurveTo(0, -s * 0.5, -s * 0.55, -s * 0.5, -s * 0.55, -s * 0.1); g.bezierCurveTo(-s * 0.55, s * 0.25, 0, s * 0.4, 0, s * 0.6); g.bezierCurveTo(0, s * 0.4, s * 0.55, s * 0.25, s * 0.55, -s * 0.1); g.bezierCurveTo(s * 0.55, -s * 0.5, 0, -s * 0.5, 0, -s * 0.15); g.fill(); }
+      else if (k === 'conf') { g.fillStyle = col; g.scale(1, Math.cos(t * 3 + ph)); g.fillRect(-s, -s * 0.5, s * 2, s); }
+      else if (k === 'petal') { g.fillStyle = col; g.beginPath(); g.ellipse(0, 0, s, s * 0.55, 0, 0, 6.283); g.fill(); }
+      else if (k === 'bubble') { g.strokeStyle = `rgba(${col},.85)`; g.lineWidth = 1.2; g.beginPath(); g.arc(0, 0, s, 0, 6.283); g.stroke(); g.fillStyle = `rgba(${col},.18)`; g.fill(); g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(-s * 0.35, -s * 0.35, Math.max(0.6, s * 0.22), 0, 6.283); g.fill(); }
+      else if (k === 'glit') { g.globalAlpha *= 0.55 + 0.45 * Math.sin(t * 6 + ph); g.fillStyle = col; g.beginPath(); g.moveTo(0, -s * 1.6); g.lineTo(s * 0.35, -s * 0.35); g.lineTo(s * 1.6, 0); g.lineTo(s * 0.35, s * 0.35); g.lineTo(0, s * 1.6); g.lineTo(-s * 0.35, s * 0.35); g.lineTo(-s * 1.6, 0); g.lineTo(-s * 0.35, -s * 0.35); g.fill(); }
+    }
+    function draw(g, p, k, alpha) {
+      g.save(); g.globalAlpha = alpha; g.translate(p.x, p.y);
+      if (k === 'soft') { const sp = sprite(cfg.rgb || (isLight() ? '110,155,220' : '255,255,255')); g.drawImage(sp, -p.s, -p.s, p.s * 2, p.s * 2); }
+      else { if (k === 'conf' || k === 'petal') g.rotate(p.rot); else if (k === 'heart') g.rotate(Math.sin(p.ph + t * p.fr) * 0.35); shape(g, k, p.s, p.col, p.ph); }
+      g.restore();
+    }
+    function drawGround(light) {
+      const G = GROUND[id]; if (!G) return;
+      for (const [col, hh, f, ph] of (light && G.l) || G.d) {
+        bctx.fillStyle = col; bctx.beginPath(); bctx.moveTo(0, h);
+        for (let x = 0; x <= w + 20; x += 20) bctx.lineTo(x, h - hh * 0.5 - Math.sin(x * f + ph) * hh * 0.3 - Math.sin(x * f * 2.3 + ph * 2) * hh * 0.12);
+        bctx.lineTo(w, h); bctx.closePath(); bctx.fill();
+      }
+      if (G.glint) for (const q of glints) { // glitzernde Schneekristalle
+        bctx.globalAlpha = Math.max(0, Math.sin(t * 2.5 + q.p)) * 0.9; bctx.fillStyle = light ? '#7fa6e0' : '#fff';
+        bctx.fillRect(q.x - 2, q.y, 5, 1); bctx.fillRect(q.x, q.y - 2, 1, 5);
+      }
+      bctx.globalAlpha = 1;
+    }
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now; t += dt;
+      bctx.clearRect(0, 0, w, h); fctx.clearRect(0, 0, w, h);
+      drawGround(isLight());
+      const wind = Math.sin(t * 0.13) * 18 + Math.sin(t * 0.41 + 1.3) * 9; // sanfte Windböen
+      for (const p of ps) {
+        p.x += (wind * (0.4 + p.d) + Math.sin(p.ph + t * p.fr) * p.amp) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        if (p.vy > 0 ? p.y > h + 20 : p.y < -20) { p.y = p.vy > 0 ? -20 : h + 20; p.x = rnd(0, w); }
+        if (p.x > w + 24) p.x = -24; else if (p.x < -24) p.x = w + 24;
+        draw(p.front ? fctx : bctx, p, cfg.shape, p.front ? p.a * 0.6 : p.a);
+      }
+      for (let i = 0; i < bats.length; i++) { // Fledermäuse fliegen quer durchs Bild
+        const b = bats[i]; b.x += b.vx * dt; b.y += Math.sin(t * 2 + b.ph) * 30 * dt;
+        if (b.x < -60 || b.x > w + 60) { bats[i] = mkBat(false); continue; }
+        const f = Math.sin(t * 14 + b.ph) * 0.5 + 0.5, s = b.s;
+        bctx.save(); bctx.translate(b.x, b.y); bctx.scale(b.dir, 1); bctx.fillStyle = 'rgba(18,10,28,.88)';
+        for (const m of [1, -1]) { bctx.save(); bctx.scale(m, 1); bctx.beginPath(); bctx.moveTo(0, 0); bctx.quadraticCurveTo(-s * 0.7, -s * (0.9 * f + 0.1), -s * 1.4, s * 0.1); bctx.quadraticCurveTo(-s * 0.9, s * 0.05, -s * 0.7, s * 0.5); bctx.quadraticCurveTo(-s * 0.35, s * 0.15, 0, s * 0.35); bctx.fill(); bctx.restore(); }
+        bctx.beginPath(); bctx.arc(0, s * 0.05, s * 0.22, 0, 6.283); bctx.fill(); bctx.restore();
+      }
+      for (let i = puffs.length - 1; i >= 0; i--) {
+        const p = puffs[i]; p.age += dt;
+        if (p.age >= p.life) { puffs.splice(i, 1); continue; }
+        p.vy += (cfg.up ? -120 : 300) * dt; p.vx *= 1 - 1.5 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        draw(fctx, p, cfg.burst, 1 - p.age / p.life);
       }
     }
     function burst(x, y) {
-      for (let i = 0; i < 10; i++) puffs.push({ x: x + rnd(-6, 6), y, vx: rnd(-70, 70), vy: rnd(-130, -30), age: 0, life: rnd(0.5, 0.95), s: rnd(2, 4.5) });
+      for (let i = 0; i < 10; i++) puffs.push({ x: x + rnd(-6, 6), y, vx: rnd(-70, 70), vy: rnd(-130, -30), age: 0, life: rnd(0.5, 0.95),
+        s: cfg.burst === 'soft' ? rnd(3, 7) : rnd(3, 8), ph: rnd(0, 6), fr: 1, rot: rnd(0, 6), vr: rnd(-6, 6), col: cfg.cols ? pick(cfg.cols) : null });
       if (puffs.length > 140) puffs.splice(0, puffs.length - 140);
     }
     function onClick(e) {
       const b = e.target && e.target.closest && e.target.closest('.btn,.chip,.item,.gear');
       if (!b || b.disabled) return;
-      const r = b.getBoundingClientRect();
-      burst(r.left + r.width * rnd(0.2, 0.8), r.top);
+      const r = b.getBoundingClientRect(); burst(r.left + r.width * rnd(0.2, 0.8), r.top);
     }
-    function drawDrift(ctx, light) { // Schneewehe am unteren Bildschirmrand (liegt hinter dem Inhalt)
-      const top = h - 34;
-      const gr = ctx.createLinearGradient(0, top, 0, h);
-      if (light) { gr.addColorStop(0, 'rgba(150,185,235,.0)'); gr.addColorStop(1, 'rgba(150,185,235,.55)'); }
-      else { gr.addColorStop(0, 'rgba(255,255,255,.0)'); gr.addColorStop(1, 'rgba(255,255,255,.5)'); }
-      ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(0, h);
-      for (let x = 0; x <= w + 24; x += 24) ctx.lineTo(x, h - 16 - Math.sin(x * 0.011) * 6 - Math.sin(x * 0.029 + 2) * 3);
-      ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-    }
-    function frame(now) {
-      raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now; t += dt;
-      const kind = isLight() ? 'light' : 'dark', spr = sprite(kind);
-      const wind = Math.sin(t * 0.13) * 18 + Math.sin(t * 0.41 + 1.3) * 9; // sanfte Windböen
-      bctx.clearRect(0, 0, w, h); fctx.clearRect(0, 0, w, h);
-      drawDrift(bctx, kind === 'light');
-      for (const f of flakes) {
-        f.x += (wind * (0.4 + f.d) + Math.sin(f.ph + t * f.fr) * f.amp) * dt;
-        f.y += f.vy * dt;
-        if (f.y > h + 14) { f.y = -14; f.x = rnd(0, w); }
-        if (f.x > w + 24) f.x = -24; else if (f.x < -24) f.x = w + 24;
-        const ctx = f.front ? fctx : bctx;
-        ctx.globalAlpha = f.front ? f.a * 0.6 : f.a;
-        ctx.drawImage(spr, f.x - f.s, f.y - f.s, f.s * 2, f.s * 2);
-      }
-      for (let i = puffs.length - 1; i >= 0; i--) {
-        const p = puffs[i]; p.age += dt;
-        if (p.age >= p.life) { puffs.splice(i, 1); continue; }
-        p.vy += 300 * dt; p.vx *= 1 - 1.5 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
-        fctx.globalAlpha = 1 - p.age / p.life;
-        fctx.drawImage(spr, p.x - p.s * 1.6, p.y - p.s * 1.6, p.s * 3.2, p.s * 3.2);
-      }
-      bctx.globalAlpha = 1; fctx.globalAlpha = 1;
-    }
-    function start() {
-      if (back || reduced()) return;
-      back = makeCanvas('snowBack'); front = makeCanvas('snowFront');
+    function start(themeId) {
+      if (back || reduced() || !FXT[themeId]) return;
+      id = themeId; cfg = FXT[themeId]; puffs = []; last = 0;
+      back = makeCanvas('fxBack'); front = makeCanvas('fxFront');
       document.body.prepend(back); document.body.append(front);
       bctx = back.getContext('2d'); fctx = front.getContext('2d');
-      puffs = []; last = 0;
-      resize(); window.addEventListener('resize', resize);
-      document.addEventListener('click', onClick, true);
+      resize(); window.addEventListener('resize', resize); document.addEventListener('click', onClick, true);
       raf = requestAnimationFrame(frame);
     }
     function stop() {
       if (!back) return;
       cancelAnimationFrame(raf); window.removeEventListener('resize', resize); document.removeEventListener('click', onClick, true);
-      back.remove(); front.remove(); back = front = bctx = fctx = null; flakes = []; puffs = [];
+      back.remove(); front.remove(); back = front = bctx = fctx = null; ps = []; puffs = []; bats = [];
     }
     return { start, stop };
   })();
@@ -223,10 +254,12 @@
     const layer = $('#overlayLayer');
     if (!layer) return;
     layer.textContent = '';
-    FW.stop(); SNOW.stop();
+    FW.stop(); FX.stop();
     const o = OVERLAYS.find(x => x.id === T.getOverlay());
-    if (o && o.fireworks) { FW.start(); return; }
-    if (o && o.snow) { SNOW.start(); return; }
+    if (!o || !o.id) return;
+    if (o.fireworks) FW.start();
+    FX.start(o.id);
+    return;
     if (!o || !o.items) return;
     const count = window.innerWidth < 600 ? 14 : 24;
     for (let i = 0; i < count; i++) {
