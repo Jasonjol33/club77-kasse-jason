@@ -1,7 +1,7 @@
 'use strict';
 // Minimaler Service Worker: macht die Kasse als App installierbar.
 // Die API wird NIE zwischengespeichert (Rechnungen/Umsätze müssen immer live vom Server kommen).
-const CACHE = 'club77-shell-v4';
+const CACHE = 'club77-shell-v5';
 const SHELL = ['/', '/app.js', '/settings.js', '/theme-init.js', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', e => {

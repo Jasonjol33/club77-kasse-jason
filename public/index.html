@@ -503,6 +503,34 @@ dialog h3{ margin-bottom:6px; }
 @media (prefers-reduced-motion:reduce){ #overlayLayer, #fireworks{ display:none; } }
 :root[data-theme="light"] h2{ text-shadow:none; }
 @media (max-width:700px){ .app{ padding-top:44px; } }
+
+/* ===== Weihnachten: Schnee auf jedem Button + Schneefall (Canvas) ===== */
+:root[data-overlay="weihnachten"]{ --snow:#fff; --snow-edge:rgba(120,150,200,.55); --snow-shadow:rgba(0,0,0,.28); }
+:root[data-overlay="weihnachten"][data-theme="light"]{ --snow:#f8fbff; --snow-edge:rgba(70,105,160,.65); --snow-shadow:rgba(40,70,120,.3); }
+:root[data-overlay="weihnachten"] :is(.btn,.chip){ position:relative; }
+:root[data-overlay="weihnachten"] :is(.btn,.chip,.item,.gear)::before{
+  content:""; position:absolute; left:7%; right:7%; top:-8px; height:18px; z-index:2; pointer-events:none;
+  background:
+    radial-gradient(circle at 9% 9px,  var(--snow) 0 4px,   transparent 4.7px),
+    radial-gradient(circle at 26% 7px, var(--snow) 0 5.5px, transparent 6.2px),
+    radial-gradient(circle at 45% 8px, var(--snow) 0 4.5px, transparent 5.2px),
+    radial-gradient(circle at 63% 6px, var(--snow) 0 6px,   transparent 6.7px),
+    radial-gradient(circle at 83% 8px, var(--snow) 0 4.5px, transparent 5.2px),
+    radial-gradient(circle at 36% 15px, var(--snow) 0 3px,  transparent 3.7px),
+    radial-gradient(circle at 72% 15px, var(--snow) 0 3.5px, transparent 4.2px),
+    radial-gradient(circle at 3px 11px, var(--snow) 0 3px, transparent 3.7px),
+    radial-gradient(circle at calc(100% - 3px) 11px, var(--snow) 0 3px, transparent 3.7px),
+    linear-gradient(var(--snow),var(--snow)) 3px 8px / calc(100% - 6px) 6px no-repeat;
+  filter:drop-shadow(0 1px 0 var(--snow-edge)) drop-shadow(0 2px 2px var(--snow-shadow));
+}
+:root[data-overlay="weihnachten"] :is(.btn,.chip,.item,.gear):nth-child(even)::before{ transform:scaleX(-1); }
+:root[data-overlay="weihnachten"] :is(.btn,.chip,.item):nth-child(3n)::before{ left:12%; right:4%; top:-7px; }
+:root[data-overlay="weihnachten"] .gear::before{ left:14%; right:14%; top:-6px; }
+:root[data-overlay="weihnachten"] .gear:hover{ transform:scale(1.08); }
+#snowBack, #snowFront{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; }
+#snowBack{ z-index:-1; }
+#snowFront{ z-index:45; }
+@media (prefers-reduced-motion:reduce){ #snowBack, #snowFront{ display:none; } }
 </style>
 </head>
 

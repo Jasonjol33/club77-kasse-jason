@@ -7,7 +7,7 @@
   // mode: fall = fällt von oben, rise = steigt von unten auf
   const OVERLAYS = [
     { id: '', name: 'Standard', emoji: '🏠' },
-    { id: 'weihnachten', name: 'Weihnachten', emoji: '🎄', mode: 'fall', items: ['❄️', '❄️', '⛄', '🎄', '⭐'] },
+    { id: 'weihnachten', name: 'Weihnachten', emoji: '🎄', snow: true }, // echter Schneefall (Canvas) + Schnee auf den Buttons (CSS)
     { id: 'silvester', name: 'Silvester', emoji: '🎆', fireworks: true }, // echtes Feuerwerk (Canvas), keine Emojis
     { id: 'valentin', name: 'Valentinstag', emoji: '💘', mode: 'rise', items: ['💘', '💖', '💕', '❤️'] },
     { id: 'karneval', name: 'Karneval', emoji: '🎭', mode: 'fall', items: ['🎭', '🎈', '🎊', '🥳'] },
@@ -120,14 +120,113 @@
     return { start, stop };
   })();
 
+
+  /* ---------- Schneefall (Weihnachten): mehrere Tiefenebenen, Windböen, Schneewehe am Boden, Schnee-Puff beim Klicken ---------- */
+  const SNOW = (() => {
+    let back = null, front = null, bctx = null, fctx = null, raf = 0, w = 0, h = 0, dpr = 1, last = 0, t = 0;
+    let flakes = [], puffs = [];
+    const sprites = {};
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
+
+    function sprite(kind) { // weiche Schneeflocke, einmal vorgezeichnet
+      if (sprites[kind]) return sprites[kind];
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      if (kind === 'light') { gr.addColorStop(0, 'rgba(110,155,220,.95)'); gr.addColorStop(0.45, 'rgba(135,175,235,.5)'); gr.addColorStop(1, 'rgba(160,195,240,0)'); }
+      else { gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.65)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); }
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+      return (sprites[kind] = c);
+    }
+    function makeCanvas(id) { const c = document.createElement('canvas'); c.id = id; c.setAttribute('aria-hidden', 'true'); return c; }
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth; h = window.innerHeight;
+      for (const [c, x] of [[back, bctx], [front, fctx]]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0); }
+      initFlakes();
+    }
+    function initFlakes() {
+      const n = Math.round(Math.min(240, Math.max(70, (w * h) / 8500)) * (w < 600 ? 0.65 : 1));
+      flakes = [];
+      for (let i = 0; i < n; i++) {
+        const d = Math.pow(Math.random(), 1.6); // 0 = weit weg (klein, langsam), 1 = nah (groß, schnell)
+        flakes.push({ x: rnd(0, w), y: rnd(-20, h), d, front: d > 0.9,
+          s: 1.6 + d * d * 8.5, vy: 24 + d * 70 + rnd(-6, 6), a: 0.3 + d * 0.55,
+          ph: rnd(0, 6.28), fr: rnd(0.6, 1.6), amp: rnd(5, 20) });
+      }
+    }
+    function burst(x, y) {
+      for (let i = 0; i < 10; i++) puffs.push({ x: x + rnd(-6, 6), y, vx: rnd(-70, 70), vy: rnd(-130, -30), age: 0, life: rnd(0.5, 0.95), s: rnd(2, 4.5) });
+      if (puffs.length > 140) puffs.splice(0, puffs.length - 140);
+    }
+    function onClick(e) {
+      const b = e.target && e.target.closest && e.target.closest('.btn,.chip,.item,.gear');
+      if (!b || b.disabled) return;
+      const r = b.getBoundingClientRect();
+      burst(r.left + r.width * rnd(0.2, 0.8), r.top);
+    }
+    function drawDrift(ctx, light) { // Schneewehe am unteren Bildschirmrand (liegt hinter dem Inhalt)
+      const top = h - 34;
+      const gr = ctx.createLinearGradient(0, top, 0, h);
+      if (light) { gr.addColorStop(0, 'rgba(150,185,235,.0)'); gr.addColorStop(1, 'rgba(150,185,235,.55)'); }
+      else { gr.addColorStop(0, 'rgba(255,255,255,.0)'); gr.addColorStop(1, 'rgba(255,255,255,.5)'); }
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(0, h);
+      for (let x = 0; x <= w + 24; x += 24) ctx.lineTo(x, h - 16 - Math.sin(x * 0.011) * 6 - Math.sin(x * 0.029 + 2) * 3);
+      ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+    }
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now; t += dt;
+      const kind = isLight() ? 'light' : 'dark', spr = sprite(kind);
+      const wind = Math.sin(t * 0.13) * 18 + Math.sin(t * 0.41 + 1.3) * 9; // sanfte Windböen
+      bctx.clearRect(0, 0, w, h); fctx.clearRect(0, 0, w, h);
+      drawDrift(bctx, kind === 'light');
+      for (const f of flakes) {
+        f.x += (wind * (0.4 + f.d) + Math.sin(f.ph + t * f.fr) * f.amp) * dt;
+        f.y += f.vy * dt;
+        if (f.y > h + 14) { f.y = -14; f.x = rnd(0, w); }
+        if (f.x > w + 24) f.x = -24; else if (f.x < -24) f.x = w + 24;
+        const ctx = f.front ? fctx : bctx;
+        ctx.globalAlpha = f.front ? f.a * 0.6 : f.a;
+        ctx.drawImage(spr, f.x - f.s, f.y - f.s, f.s * 2, f.s * 2);
+      }
+      for (let i = puffs.length - 1; i >= 0; i--) {
+        const p = puffs[i]; p.age += dt;
+        if (p.age >= p.life) { puffs.splice(i, 1); continue; }
+        p.vy += 300 * dt; p.vx *= 1 - 1.5 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        fctx.globalAlpha = 1 - p.age / p.life;
+        fctx.drawImage(spr, p.x - p.s * 1.6, p.y - p.s * 1.6, p.s * 3.2, p.s * 3.2);
+      }
+      bctx.globalAlpha = 1; fctx.globalAlpha = 1;
+    }
+    function start() {
+      if (back || reduced()) return;
+      back = makeCanvas('snowBack'); front = makeCanvas('snowFront');
+      document.body.prepend(back); document.body.append(front);
+      bctx = back.getContext('2d'); fctx = front.getContext('2d');
+      puffs = []; last = 0;
+      resize(); window.addEventListener('resize', resize);
+      document.addEventListener('click', onClick, true);
+      raf = requestAnimationFrame(frame);
+    }
+    function stop() {
+      if (!back) return;
+      cancelAnimationFrame(raf); window.removeEventListener('resize', resize); document.removeEventListener('click', onClick, true);
+      back.remove(); front.remove(); back = front = bctx = fctx = null; flakes = []; puffs = [];
+    }
+    return { start, stop };
+  })();
+
   /* ---------- Overlay-Partikel ---------- */
   function renderOverlay() {
     const layer = $('#overlayLayer');
     if (!layer) return;
     layer.textContent = '';
-    FW.stop();
+    FW.stop(); SNOW.stop();
     const o = OVERLAYS.find(x => x.id === T.getOverlay());
     if (o && o.fireworks) { FW.start(); return; }
+    if (o && o.snow) { SNOW.start(); return; }
     if (!o || !o.items) return;
     const count = window.innerWidth < 600 ? 14 : 24;
     for (let i = 0; i < count; i++) {
