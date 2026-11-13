@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLUB 77 • Kassensystem</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#07050c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CLUB 77 Kasse">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+
+<style>
+:root{
+  --pink:#ff2bd6;
+  --bg:#07050c;
+  --card:#15111d;
+  --card2:#1d1829;
+  --line:#2d2640;
+  --mut:#9d94b5;
+  --red:#ff5a6e;
+  --green:#4ade80;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+}
+
+/* Inputs dürfen weiterhin auswählbar bleiben */
+input,textarea{
+  user-select:text;
+  -webkit-user-select:text;
+}
+
+[hidden]{ display:none !important; }
+
+body{
+  margin:0;
+  font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(ellipse at top,#2a0526 0,var(--bg) 65%) fixed;
+  color:#f6f1ff;
+  padding:20px;
+}
+
+.app{
+  max-width:1150px;
+  margin:auto;
+  display:grid;
+  gap:18px;
+}
+
+h2{
+  margin:0;
+  text-align:center;
+  font-size:30px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-shadow:0 0 18px rgba(255,43,214,.6);
+}
+
+h3{
+  margin:0 0 14px;
+  font-size:19px;
+  font-weight:800;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  padding:18px;
+  border-radius:16px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
+}
+
+.item{
+  background:var(--card2);
+  padding:12px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  position:relative;
+  border:1px solid var(--line);
+  min-height:76px;
+  font-weight:700;
+  line-height:1.25;
+  padding-right:56px;
+  transition:border-color .15s, box-shadow .15s;
+}
+
+.item small{
+  display:block;
+  margin-top:6px;
+  font-weight:400;
+  font-size:13px;
+  color:var(--mut);
+}
+
+.item:hover{
+  border-color:var(--pink);
+  box-shadow:0 0 14px rgba(255,43,214,.45);
+}
+
+.item:active{ transform:scale(.98); }
+
+.item.has{
+  border-color:var(--pink);
+  background:linear-gradient(160deg,#2b1034,var(--card2));
+}
+
+.count{
+  position:absolute;
+  right:12px;
+  bottom:8px;
+  color:var(--mut);
+  font-weight:900;
+  font-size:18px;
+}
+
+.item.has .count{ color:var(--pink); }
+
+/* Minus-Knopf (auf dem Handy gibt es kein Rechtsklick) */
+.minus{
+  position:absolute;
+  top:6px;
+  right:8px;
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#0e0b15;
+  color:#fff;
+  font:inherit;
+  font-weight:900;
+  font-size:20px;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+}
+.minus:hover{ border-color:var(--pink); }
+.item:not(.has) .minus{ display:none; }
+
+.btn{
+  background:var(--pink);
+  border:none;
+  padding:11px 18px;
+  border-radius:12px;
+  color:#fff;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+  margin:4px;
+  min-height:44px;
+  transition:box-shadow .15s, transform .1s;
+}
+
+.btn:hover{ box-shadow:0 0 16px rgba(255,43,214,.6); }
+.btn:active{ transform:scale(.97); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; transform:none; }
+
+.btn.off{
+  background:var(--card2);
+  border:1px solid var(--line);
+  color:#d9d0ee;
+}
+
+.btn.off:hover{ border-color:var(--pink); box-shadow:none; }
+
+.btn.danger{
+  background:#3a1220;
+  border:1px solid #7a2540;
+  color:#ffd6de;
+}
+.btn.danger:hover{ border-color:var(--red); box-shadow:none; }
+
+.btn.sm{ min-height:36px; padding:6px 12px; font-size:13px; margin:2px; }
+
+:focus-visible{ outline:2px solid var(--pink); outline-offset:2px; }
+
+.input{
+  font:inherit;
+  width:100%;
+  max-width:340px;
+  background:#0e0b15;
+  color:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:11px 14px;
+  min-height:44px;
+}
+
+.input:focus{ border-color:var(--pink); outline:none; }
+.input.wide{ max-width:none; }
+
+/* ===== RABATT ===== */
+.rabatt{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  margin:4px 0 16px;
+}
+
+.rabatt label{ font-weight:600; }
+
+.rabatt .input{ width:110px; }
+.rabatt .input.reason{ width:100%; max-width:340px; }
+
+.chip{
+  font:inherit;
+  font-weight:800;
+  font-size:13px;
+  color:#fff;
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 16px;
+  min-height:40px;
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+
+.chip:hover{ border-color:var(--pink); }
+
+.chip.on{
+  background:var(--pink);
+  border-color:var(--pink);
+  box-shadow:0 0 12px rgba(255,43,214,.5);
+}
+
+#sum small{
+  font-size:14px;
+  font-weight:600;
+  color:var(--mut);
+  margin-left:6px;
+}
+
+#sum{
+  font-size:28px;
+  font-weight:900;
+  color:var(--pink);
+}
+
+hr{
+  border:none;
+  border-top:1px solid var(--line);
+  margin:18px 0;
+}
+
+#dailyBox{
+  background:#0e0b15;
+  border:1px solid var(--line);
+  padding:12px 14px;
+  border-radius:12px;
+  max-height:240px;
+  overflow:auto;
+  font-size:14px;
+  line-height:1.7;
+  text-align:left;
+  user-select:text;
+  -webkit-user-select:text;
+}
+
+/* ===== LOGO ===== */
+.logo-container{
+  text-align:center;
+}
+
+.logo-container img{
+  max-width:min(460px,90%);
+  height:auto;
+  border-radius:14px;
+  box-shadow:0 6px 30px rgba(255,43,214,.3);
+}
+
+/* ===== SCHRITTWEITE BUTTONS ===== */
+.step-buttons{
+  margin-top:10px;
+  text-align:center;
+}
+
+.step-buttons .btn.on{
+  background:var(--pink);
+  border:none;
+  color:#fff;
+  box-shadow:0 0 16px rgba(255,43,214,.6);
+}
+
+/* ===== NEU: Anmeldung, Leiste, Tabs ===== */
+.login{ max-width:420px; margin:0 auto; width:100%; }
+.login label,.field label{ display:block; font-weight:600; margin:12px 0 6px; }
+.login .input{ max-width:none; }
+.msg{ margin-top:12px; font-weight:600; min-height:1.2em; }
+.msg.err{ color:var(--red); }
+.msg.ok{ color:var(--green); }
+.hint{ color:var(--mut); font-size:14px; line-height:1.5; }
+
+.topbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 18px;
+}
+.who{ font-weight:700; }
+.badge{
+  display:inline-block;
+  font-size:12px;
+  font-weight:800;
+  padding:3px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--card2);
+  color:var(--mut);
+  margin-left:8px;
+  vertical-align:middle;
+}
+.badge.admin{ border-color:var(--pink); color:var(--pink); }
+.badge.bad{ border-color:var(--red); color:var(--red); }
+.badge.good{ border-color:var(--green); color:var(--green); }
+
+.tabs{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.tabs .chip{ font-size:15px; padding:10px 20px; }
+
+/* ===== NEU: Filter, Kennzahlen, Tabellen ===== */
+.filters{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:14px; }
+.filters .field{ display:flex; flex-direction:column; gap:4px; }
+.filters .field label{ margin:0; font-size:13px; color:var(--mut); font-weight:600; }
+.filters .input{ width:auto; min-width:150px; }
+.filters .input.q{ min-width:200px; }
+select.input{ appearance:auto; }
+
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+.stat{ background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.stat span{ display:block; color:var(--mut); font-size:13px; font-weight:600; }
+.stat b{ display:block; margin-top:4px; font-size:22px; font-weight:900; color:var(--pink); }
+
+.tablewrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:#0e0b15; }
+table{ width:100%; border-collapse:collapse; font-size:14px; user-select:text; -webkit-user-select:text; }
+th,td{ padding:9px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+th{ color:var(--mut); font-weight:700; font-size:13px; }
+td.num,th.num{ text-align:right; }
+tbody tr:last-child td{ border-bottom:none; }
+tr.click{ cursor:pointer; }
+tr.click:hover td{ background:rgba(255,43,214,.08); }
+tr.storno td{ color:var(--red); }
+tr.sum td{ font-weight:800; color:var(--pink); border-top:1px solid var(--line); }
+.empty{ padding:18px; text-align:center; color:var(--mut); }
+
+details{ margin-top:6px; }
+summary{ cursor:pointer; font-weight:800; font-size:17px; padding:6px 0; }
+
+.newuser{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:14px; }
+.newuser .field{ display:flex; flex-direction:column; gap:4px; }
+.newuser .field label{ margin:0; font-size:13px; color:var(--mut); font-weight:600; }
+.secretbox{
+  margin:10px 0; padding:12px 14px; border:1px dashed var(--pink); border-radius:12px;
+  background:#0e0b15; user-select:text; -webkit-user-select:text; line-height:1.6;
+}
+.secretbox code{ font-size:18px; font-weight:800; color:var(--pink); letter-spacing:.5px; }
+
+/* ===== NEU: Dialog (Bon / Rechnungsdetails) ===== */
+dialog{
+  background:var(--card);
+  color:#f6f1ff;
+  border:1px solid var(--pink);
+  border-radius:16px;
+  padding:20px;
+  width:min(620px,94vw);
+  max-height:90vh;
+  overflow:auto;
+  box-shadow:0 0 40px rgba(255,43,214,.35);
+  user-select:text;
+  -webkit-user-select:text;
+}
+dialog::backdrop{ background:rgba(0,0,0,.7); }
+dialog h3{ margin-bottom:6px; }
+.kv{ color:var(--mut); font-size:14px; line-height:1.7; }
+.kv b{ color:#f6f1ff; }
+.dlgfoot{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; margin-top:14px; }
+.totalrow{ font-size:22px; font-weight:900; color:var(--pink); margin-top:10px; }
+.stornobox{ margin-top:14px; padding:12px; border:1px solid #7a2540; border-radius:12px; background:#1a0b13; }
+.stornobox textarea{ width:100%; min-height:70px; font:inherit; background:#0e0b15; color:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; margin:8px 0; }
+
+@media (max-width:560px){
+  body{ padding:12px; }
+  h2{ font-size:24px; }
+  .filters .input{ min-width:0; width:100%; }
+  .filters .field{ flex:1 1 140px; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h2>CLUB 77 • Kassensystem</h2>
+
+<!-- Großes Logo -->
+<div class="logo-container">
+  <img src="https://i.postimg.cc/C5BCPFCd/image.png" alt="CLUB 77 Logo">
+</div>
+
+<!-- ===== ANMELDUNG ===== -->
+<div class="card login" id="loginView" hidden>
+  <h3>🔐 Mitarbeiter-Anmeldung</h3>
+  <form id="loginForm" autocomplete="on">
+    <label for="loginUser">Benutzername</label>
+    <input id="loginUser" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    <label for="loginPass">Passwort</label>
+    <input id="loginPass" class="input" type="password" autocomplete="current-password" required>
+    <div class="msg err" id="loginMsg" role="alert"></div>
+    <button class="btn" type="submit" id="loginBtn" style="margin:12px 0 0">Anmelden</button>
+  </form>
+  <div id="discordLoginWrap" hidden>
+    <hr>
+    <a class="btn off" id="discordLoginBtn" href="/api/auth/discord/start" style="display:block;text-align:center;text-decoration:none;margin:0">💬 Mit Discord anmelden</a>
+    <p class="hint">Erste Anmeldung: mit Benutzername und Passwort von der Leitung. Danach verknüpfst du Discord in der App („💬 Discord verknüpfen“) – ab dann meldest du dich nur noch über Discord an (Mitarbeiter-Rolle auf dem Discord-Server nötig).</p>
+  </div>
+</div>
+
+<!-- Ersteinrichtung (nur sichtbar, solange noch kein Administrator existiert) -->
+<div class="card login" id="setupView" hidden>
+  <h3>🛠️ Ersteinrichtung</h3>
+  <p class="hint">Es gibt noch keinen Administrator. Den <b>Setup-Code</b> findest du im Server-Log (<code>fly logs</code>).</p>
+  <form id="setupForm" autocomplete="off">
+    <label for="setupCode">Setup-Code</label>
+    <input id="setupCode" class="input" autocomplete="off" spellcheck="false" required>
+    <label for="setupUser">Administrator-Benutzername</label>
+    <input id="setupUser" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    <label for="setupPass">Passwort (mind. 10 Zeichen)</label>
+    <input id="setupPass" class="input" type="password" autocomplete="new-password" minlength="10" required>
+    <label for="setupPass2">Passwort wiederholen</label>
+    <input id="setupPass2" class="input" type="password" autocomplete="new-password" minlength="10" required>
+    <div class="msg err" id="setupMsg" role="alert"></div>
+    <button class="btn" type="submit" style="margin:12px 0 0">Administrator anlegen</button>
+  </form>
+</div>
+
+<!-- Passwort-Änderung erzwingen (nach Erstellung/Reset durch den Admin) -->
+<div class="card login" id="pwView" hidden>
+  <h3>🔑 Neues Passwort festlegen</h3>
+  <p class="hint">Dein Passwort wurde vom Administrator vergeben. Bitte wähle jetzt ein eigenes Passwort (mind. 10 Zeichen).</p>
+  <form id="pwForm" autocomplete="off">
+    <label for="pwOld">Aktuelles Passwort</label>
+    <input id="pwOld" class="input" type="password" autocomplete="current-password" required>
+    <label for="pwNew">Neues Passwort</label>
+    <input id="pwNew" class="input" type="password" autocomplete="new-password" minlength="10" required>
+    <label for="pwNew2">Neues Passwort wiederholen</label>
+    <input id="pwNew2" class="input" type="password" autocomplete="new-password" minlength="10" required>
+    <div class="msg err" id="pwMsg" role="alert"></div>
+    <button class="btn" type="submit" style="margin:12px 0 0">Passwort speichern</button>
+    <button class="btn off" type="button" id="pwLogout" style="margin:12px 0 0">Abmelden</button>
+  </form>
+</div>
+
+<!-- ===== HAUPTANWENDUNG ===== -->
+<div id="appView" hidden>
+
+<div class="card topbar">
+  <div class="who">👤 <span id="whoName"></span><span class="badge" id="whoRole"></span></div>
+  <div>
+    <button class="btn off sm" id="discordBtn" hidden>💬 Discord verknüpfen</button>
+    <button class="btn off sm" id="changePwBtn">🔑 Passwort ändern</button>
+    <button class="btn off sm" id="logoutBtn">🚪 Abmelden</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs" style="margin:18px 0">
+  <button class="chip on" data-tab="kasse">🧾 Kasse</button>
+  <button class="chip" data-tab="invoices" id="tabInvoices">📄 Meine Rechnungen</button>
+  <button class="chip" data-tab="products" id="tabProducts" hidden>🏷️ Produkte</button>
+  <button class="chip" data-tab="admin" id="tabAdmin" hidden>🛡️ Admin</button>
+</div>
+
+<!-- ===== KASSE (bisherige Oberfläche) ===== -->
+<div id="kasseView" style="display:grid;gap:18px">
+
+<!-- ===== SCHRITTWEITE AUSWAHL ===== -->
+<div class="card">
+  <h3>🧮 Klick-Menge wählen</h3>
+  <div class="step-buttons">
+    <button class="btn on" data-step="1">1 pro Klick</button>
+    <button class="btn off" data-step="10">10 pro Klick</button>
+    <button class="btn off" data-step="50">50 pro Klick</button>
+  </div>
+</div>
+
+<!-- ===== PRODUKT SEKTIONEN (werden aus dem Server-Katalog aufgebaut) ===== -->
+<div id="products" style="display:grid;gap:18px"></div>
+
+<!-- ===== KASSE ===== -->
+<div class="card">
+<div style="font-weight:700;font-size:17px">🧑‍💼 Kassierer: <span id="cashierName" style="color:var(--pink)"></span></div><br>
+
+<div class="rabatt">
+  <label for="rabatt">🎁 Rabatt (%):</label>
+  <input id="rabatt" class="input" type="number" min="0" max="100" step="1" value="0" inputmode="numeric">
+  <button class="chip on" data-v="0">0%</button>
+  <button class="chip" data-v="10">10%</button>
+  <button class="chip" data-v="20">20%</button>
+  <button class="chip" data-v="50">50%</button>
+  <input id="rabattReason" class="input reason" maxlength="120" placeholder="Rabattgrund (optional)" aria-label="Rabattgrund">
+</div>
+
+<div id="sum">Gesamt: 0 €</div><br>
+
+<button class="btn" id="sendBon">🧾 Bon senden</button>
+<button class="btn" id="sendDaily">📈 Tagesumsatz an Discord senden</button>
+<button class="btn off" id="refreshDaily">🔄 Aktualisieren</button>
+
+<hr>
+
+<h3>📈 Mein Tagesumsatz <span class="hint" id="dailyDay" style="font-weight:400"></span></h3>
+<div id="dailyBox"></div>
+</div>
+
+</div><!-- /kasseView -->
+
+<!-- ===== RECHNUNGEN ===== -->
+<div id="invoicesView" hidden style="display:grid;gap:18px">
+<div class="card">
+  <h3 id="invTitle">📄 Meine Rechnungen</h3>
+  <div class="stats" id="invStats"></div>
+  <div class="filters">
+    <div class="field"><label for="fFrom">Von</label><input id="fFrom" class="input" type="date"></div>
+    <div class="field"><label for="fTo">Bis</label><input id="fTo" class="input" type="date"></div>
+    <div class="field" id="fCashierWrap" hidden><label for="fCashier">Mitarbeiter</label><select id="fCashier" class="input"></select></div>
+    <div class="field"><label for="fQ">Suche</label><input id="fQ" class="input q" placeholder="Rechnungsnr. oder Produkt" maxlength="60"></div>
+    <div class="field"><button class="chip" id="fToday">Heute</button></div>
+    <div class="field"><button class="chip" id="fAll">Alle</button></div>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Nummer</th><th>Datum / Uhrzeit</th><th>Kassierer</th><th class="num">Artikel</th><th class="num">Betrag</th><th>Status</th></tr></thead>
+    <tbody id="invBody"></tbody>
+  </table></div>
+  <div style="text-align:center;margin-top:10px">
+    <span class="hint" id="invCount"></span><br>
+    <button class="btn off sm" id="invMore" hidden>Mehr laden</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== PRODUKTE (nur Administratoren) ===== -->
+<div id="productsView" hidden style="display:grid;gap:18px">
+  <div class="card">
+    <h3>➕ Neues Produkt</h3>
+    <div class="newuser">
+      <div class="field"><label for="npName">Name</label><input id="npName" class="input" maxlength="60" autocomplete="off" placeholder="z. B. Mojito"></div>
+      <div class="field"><label for="npPrice">Preis (€)</label><input id="npPrice" class="input" type="number" min="0" step="1" inputmode="numeric" placeholder="1600" style="width:140px"></div>
+      <div class="field"><label for="npCat">Kategorie</label><select id="npCat" class="input"></select></div>
+      <div class="field"><button class="btn" id="npAdd" style="margin:0">➕ Hinzufügen</button></div>
+    </div>
+    <div class="msg" id="npMsg" role="status"></div>
+  </div>
+  <div class="card">
+    <h3>🏷️ Produkte &amp; Preise</h3>
+    <p class="hint">Preis ändern: neuen Wert eintragen und auf „Speichern“ klicken. Ausgeblendete Produkte erscheinen nicht an der Kasse. Schon erstellte Rechnungen behalten ihren damaligen Preis.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Produkt</th><th>Kategorie</th><th>Preis (€)</th><th>Status</th><th></th></tr></thead>
+      <tbody id="pBody"></tbody>
+    </table></div>
+  </div>
+</div><!-- /productsView -->
+
+<!-- ===== ADMIN ===== -->
+<div id="adminView" hidden style="display:grid;gap:18px">
+
+<div class="card">
+  <h3>📊 Umsatzübersicht</h3>
+  <div class="filters">
+    <div class="field"><label for="aFrom">Von</label><input id="aFrom" class="input" type="date"></div>
+    <div class="field"><label for="aTo">Bis</label><input id="aTo" class="input" type="date"></div>
+    <div class="field"><button class="chip" id="aToday">Heute</button></div>
+    <div class="field"><button class="chip on" id="aAll">Alle</button></div>
+    <div class="field"><button class="btn off sm" id="aCsv">⬇️ CSV-Export</button></div>
+    <div class="field"><button class="btn sm" id="aDiscord">📈 Gesamt-Tagesumsatz an Discord</button></div>
+  </div>
+  <div class="stats" id="aStats"></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Mitarbeiter</th><th>Status</th><th class="num">Rechnungen</th><th class="num">Stornos</th><th class="num">Rabatte</th><th class="num">Umsatz</th><th></th></tr></thead>
+    <tbody id="aBody"></tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <h3>👥 Mitarbeiterverwaltung</h3>
+  <div class="newuser">
+    <div class="field"><label for="nuName">Benutzername</label><input id="nuName" class="input" placeholder="z. B. Mitarbeiter04" maxlength="32" autocapitalize="none" autocomplete="off"></div>
+    <div class="field"><label for="nuPass">Start-Passwort (leer = automatisch)</label><input id="nuPass" class="input" type="text" autocomplete="off" maxlength="128"></div>
+    <div class="field"><label for="nuRole">Rolle</label><select id="nuRole" class="input"><option value="cashier">Mitarbeiter</option><option value="admin">Administrator</option></select></div>
+    <div class="field"><button class="btn" id="nuCreate" style="margin:0">➕ Konto erstellen</button></div>
+  </div>
+  <div class="msg" id="nuMsg" role="status"></div>
+  <div id="secretBox" class="secretbox" hidden></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Benutzername</th><th>Rolle</th><th>Status</th><th>Discord</th><th>Letzte Anmeldung</th><th></th></tr></thead>
+    <tbody id="uBody"></tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <details id="auditBox">
+    <summary>🕵️ Protokoll (letzte 100 Ereignisse)</summary>
+    <div class="tablewrap" style="margin-top:10px"><table>
+      <thead><tr><th>Zeit</th><th>Benutzer</th><th>Aktion</th><th>Details</th></tr></thead>
+      <tbody id="auditBody"></tbody>
+    </table></div>
+  </details>
+</div>
+
+</div><!-- /adminView -->
+
+</div><!-- /appView -->
+
+</div><!-- /app -->
+
+<dialog id="dlg"></dialog>
+
+<script src="/app.js"></script>
+<script src="/pwa.js"></script>
+</body>
+</html>

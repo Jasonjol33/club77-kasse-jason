@@ -1,0 +1,12 @@
+{
+  "name": "club77-kassensystem",
+  "version": "2.0.0",
+  "private": true,
+  "description": "CLUB 77 Kassensystem mit Mitarbeiterkonten, getrennten Rechnungen und Admin-Panel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "test": "node --disable-warning=ExperimentalWarning test/run-tests.js"
+  },
+  "engines": { "node": ">=22.13" }
+}
