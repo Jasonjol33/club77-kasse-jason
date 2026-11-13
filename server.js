@@ -527,6 +527,32 @@ function createStorno(admin, invoiceId, reasonRaw) {
   return inv;
 }
 
+/** Ausgewählte STORNOBUCHUNGEN endgültig löschen (Rechnungen selbst nie). Die Löschsperren der DB werden nur innerhalb
+ *  dieser einen Transaktion kurz entfernt und danach wiederhergestellt; bei einem Fehler wird alles zurückgerollt. */
+function deleteStornos(admin, ids) {
+  const ph = ids.map(() => '?').join(',');
+  const deleted = transaction(db, () => {
+    const rows = db.prepare(
+      `SELECT i.id, i.number, i.total, i.cashier_name, i.created_by_name, i.storno_reason,
+              (SELECT o.number FROM invoices o WHERE o.id=i.ref_invoice_id) AS ref_number
+         FROM invoices i WHERE i.kind='storno' AND i.id IN (${ph})`).all(...ids);
+    if (rows.length !== ids.length) throw new HttpError(404, 'Mindestens eine Auswahl ist keine (mehr vorhandene) Stornobuchung.');
+    db.exec('DROP TRIGGER invoices_no_delete');
+    db.exec('DROP TRIGGER items_no_delete');
+    db.prepare(`DELETE FROM discord_outbox WHERE invoice_id IN (${ph})`).run(...ids);
+    db.prepare(`DELETE FROM invoice_items WHERE invoice_id IN (${ph})`).run(...ids);
+    db.prepare(`DELETE FROM invoices WHERE kind='storno' AND id IN (${ph})`).run(...ids);
+    db.exec(`CREATE TRIGGER invoices_no_delete BEFORE DELETE ON invoices BEGIN SELECT RAISE(ABORT, 'Rechnungen dürfen nicht gelöscht werden'); END`);
+    db.exec(`CREATE TRIGGER items_no_delete BEFORE DELETE ON invoice_items BEGIN SELECT RAISE(ABORT, 'Rechnungspositionen dürfen nicht gelöscht werden'); END`);
+    return rows;
+  });
+  for (const r of deleted) {
+    audit(admin, 'invoice.storno_delete',
+      `${r.number} zu ${r.ref_number} (${r.total} €, Kassierer: ${r.cashier_name}, gebucht von: ${r.created_by_name}, Grund: ${r.storno_reason || '-'})`);
+  }
+  return { deleted: deleted.length, total: deleted.reduce((a, r) => a + r.total, 0) };
+}
+
 /* ------------------------------------------------------------------ Auswertungen (immer aus gespeicherten Rechnungen) */
 /** Konto komplett entfernen (inkl. Discord-Verknüpfung und Sitzungen). Rechnungen bleiben unverändert (Name steht als Text darin). */
 function purgeUser(id) {
@@ -843,6 +869,7 @@ route('GET', /^\/api\/invoices$/, {}, ctx => {
   const w = where ? [where.slice(6)] : [], a = [...args];
   const kind = q.get('kind');
   if (kind === 'invoice' || kind === 'storno') { w.push('i.kind=?'); a.push(kind); }
+  if (isAdmin && q.get('by')) { w.push('i.created_by=?'); a.push(parseId(q.get('by'))); } // nur Admin: "gebucht von"
   const search = cleanText(q.get('q'), 60);
   if (search) {
     const like = '%' + search.replace(/[\\%_]/g, m => '\\' + m) + '%';
@@ -870,6 +897,14 @@ route('POST', /^\/api\/invoices\/(\d+)\/storno$/, { admin: true }, async ctx => 
   const body = await ctx.body();
   const inv = createStorno(ctx.user, parseId(ctx.params[0]), body.reason);
   ctx.json(201, { invoice: inv });
+});
+
+route('POST', /^\/api\/invoices\/delete-stornos$/, { admin: true }, async ctx => {
+  const body = await ctx.body();
+  if (!Array.isArray(body.ids) || !body.ids.length) throw bad('Bitte mindestens eine Stornobuchung auswählen.');
+  if (body.ids.length > 200) throw bad('Maximal 200 Stornobuchungen auf einmal.');
+  const ids = [...new Set(body.ids.map(parseId))];
+  ctx.json(200, deleteStornos(ctx.user, ids));
 });
 
 route('GET', /^\/api\/stats$/, {}, ctx => {

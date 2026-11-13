@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="/icon-192.png">
+<script src="/theme-init.js"></script>
 
 <style>
 :root{
@@ -23,7 +24,68 @@
   --mut:#9d94b5;
   --red:#ff5a6e;
   --green:#4ade80;
+  --pink-rgb:255,43,214;
+  --text:#f6f1ff;
+  --text2:#fff;
+  --soft:#d9d0ee;
+  --input:var(--input);
+  --has:#2b1034;
+  --dng-bg:#3a1220;
+  --dng-line:#7a2540;
+  --dng-text:#ffd6de;
+  --stbox:#1a0b13;
+  --on-pink:#fff;
+  --glow-mix:16%;
+  color-scheme:dark;
 }
+
+/* ===== Hell-Modus ===== */
+:root[data-theme="light"]{
+  --pink:#d4149f;
+  --pink-rgb:212,20,159;
+  --bg:#f6f2fb;
+  --card:#ffffff;
+  --card2:#efe8f8;
+  --line:#d8cce8;
+  --mut:#6b6280;
+  --red:#c81e3a;
+  --green:#15803d;
+  --text:#1c1428;
+  --text2:#1c1428;
+  --soft:#3d3354;
+  --input:#ffffff;
+  --has:#fbe6f6;
+  --dng-bg:#fde4e8;
+  --dng-line:#e08a9a;
+  --dng-text:#8a1228;
+  --stbox:#fdecef;
+  --on-pink:#fff;
+  --glow-mix:13%;
+  color-scheme:light;
+}
+
+/* ===== Fest-Overlays: färben den Akzent um (Standard = keins) ===== */
+:root[data-overlay="weihnachten"]{ --pink:#ff3b4e; --pink-rgb:255,59,78; }
+:root[data-overlay="silvester"]{ --pink:#ffc83d; --pink-rgb:255,200,61; --on-pink:#1a1020; }
+:root[data-overlay="valentin"]{ --pink:#ff4d8d; --pink-rgb:255,77,141; }
+:root[data-overlay="karneval"]{ --pink:#a855f7; --pink-rgb:168,85,247; }
+:root[data-overlay="ostern"]{ --pink:#34d399; --pink-rgb:52,211,153; --on-pink:#1a1020; }
+:root[data-overlay="oktoberfest"]{ --pink:#3b9cff; --pink-rgb:59,156,255; --on-pink:#1a1020; }
+:root[data-overlay="halloween"]{ --pink:#ff7a1a; --pink-rgb:255,122,26; --on-pink:#1a1020; }
+:root[data-theme="light"][data-overlay="weihnachten"]{ --pink:#c81e33; --pink-rgb:200,30,51; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="silvester"]{ --pink:#9a6f00; --pink-rgb:154,111,0; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="valentin"]{ --pink:#c42a5f; --pink-rgb:196,42,95; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="karneval"]{ --pink:#7e22ce; --pink-rgb:126,34,206; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="ostern"]{ --pink:#0b7a54; --pink-rgb:11,122,84; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="oktoberfest"]{ --pink:#1d6fd6; --pink-rgb:29,111,214; --on-pink:#fff; }
+:root[data-theme="light"][data-overlay="halloween"]{ --pink:#bf4a05; --pink-rgb:191,74,5; --on-pink:#fff; }
+:root[data-overlay="weihnachten"] .app > h2::before{ content:"🎄 "; }
+:root[data-overlay="silvester"] .app > h2::before{ content:"🎆 "; }
+:root[data-overlay="valentin"] .app > h2::before{ content:"💘 "; }
+:root[data-overlay="karneval"] .app > h2::before{ content:"🎭 "; }
+:root[data-overlay="ostern"] .app > h2::before{ content:"🐣 "; }
+:root[data-overlay="oktoberfest"] .app > h2::before{ content:"🍺 "; }
+:root[data-overlay="halloween"] .app > h2::before{ content:"🎃 "; }
 
 *{
   box-sizing:border-box;
@@ -45,7 +107,8 @@ body{
   margin:0;
   font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
   background:radial-gradient(ellipse at top,#2a0526 0,var(--bg) 65%) fixed;
-  color:#f6f1ff;
+  background:radial-gradient(ellipse at top,color-mix(in srgb,var(--pink) var(--glow-mix),var(--bg)) 0,var(--bg) 65%) fixed;
+  color:var(--text);
   padding:20px;
 }
 
@@ -62,7 +125,7 @@ h2{
   font-size:30px;
   font-weight:800;
   letter-spacing:.5px;
-  text-shadow:0 0 18px rgba(255,43,214,.6);
+  text-shadow:0 0 18px rgba(var(--pink-rgb),.6);
 }
 
 h3{
@@ -108,14 +171,14 @@ h3{
 
 .item:hover{
   border-color:var(--pink);
-  box-shadow:0 0 14px rgba(255,43,214,.45);
+  box-shadow:0 0 14px rgba(var(--pink-rgb),.45);
 }
 
 .item:active{ transform:scale(.98); }
 
 .item.has{
   border-color:var(--pink);
-  background:linear-gradient(160deg,#2b1034,var(--card2));
+  background:linear-gradient(160deg,var(--has),var(--card2));
 }
 
 .count{
@@ -138,8 +201,8 @@ h3{
   height:34px;
   border-radius:10px;
   border:1px solid var(--line);
-  background:#0e0b15;
-  color:#fff;
+  background:var(--input);
+  color:var(--text2);
   font:inherit;
   font-weight:900;
   font-size:20px;
@@ -155,7 +218,7 @@ h3{
   border:none;
   padding:11px 18px;
   border-radius:12px;
-  color:#fff;
+  color:var(--on-pink);
   font:inherit;
   font-weight:700;
   cursor:pointer;
@@ -164,22 +227,22 @@ h3{
   transition:box-shadow .15s, transform .1s;
 }
 
-.btn:hover{ box-shadow:0 0 16px rgba(255,43,214,.6); }
+.btn:hover{ box-shadow:0 0 16px rgba(var(--pink-rgb),.6); }
 .btn:active{ transform:scale(.97); }
 .btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; transform:none; }
 
 .btn.off{
   background:var(--card2);
   border:1px solid var(--line);
-  color:#d9d0ee;
+  color:var(--soft);
 }
 
 .btn.off:hover{ border-color:var(--pink); box-shadow:none; }
 
 .btn.danger{
-  background:#3a1220;
-  border:1px solid #7a2540;
-  color:#ffd6de;
+  background:var(--dng-bg);
+  border:1px solid var(--dng-line);
+  color:var(--dng-text);
 }
 .btn.danger:hover{ border-color:var(--red); box-shadow:none; }
 
@@ -191,8 +254,8 @@ h3{
   font:inherit;
   width:100%;
   max-width:340px;
-  background:#0e0b15;
-  color:#fff;
+  background:var(--input);
+  color:var(--text2);
   border:1px solid var(--line);
   border-radius:12px;
   padding:11px 14px;
@@ -220,7 +283,7 @@ h3{
   font:inherit;
   font-weight:800;
   font-size:13px;
-  color:#fff;
+  color:var(--text2);
   background:var(--card2);
   border:1px solid var(--line);
   border-radius:999px;
@@ -235,7 +298,8 @@ h3{
 .chip.on{
   background:var(--pink);
   border-color:var(--pink);
-  box-shadow:0 0 12px rgba(255,43,214,.5);
+  color:var(--on-pink);
+  box-shadow:0 0 12px rgba(var(--pink-rgb),.5);
 }
 
 #sum small{
@@ -258,7 +322,7 @@ hr{
 }
 
 #dailyBox{
-  background:#0e0b15;
+  background:var(--input);
   border:1px solid var(--line);
   padding:12px 14px;
   border-radius:12px;
@@ -280,7 +344,7 @@ hr{
   max-width:min(460px,90%);
   height:auto;
   border-radius:14px;
-  box-shadow:0 6px 30px rgba(255,43,214,.3);
+  box-shadow:0 6px 30px rgba(var(--pink-rgb),.3);
 }
 
 /* ===== SCHRITTWEITE BUTTONS ===== */
@@ -292,8 +356,8 @@ hr{
 .step-buttons .btn.on{
   background:var(--pink);
   border:none;
-  color:#fff;
-  box-shadow:0 0 16px rgba(255,43,214,.6);
+  color:var(--on-pink);
+  box-shadow:0 0 16px rgba(var(--pink-rgb),.6);
 }
 
 /* ===== NEU: Anmeldung, Leiste, Tabs ===== */
@@ -346,14 +410,14 @@ select.input{ appearance:auto; }
 .stat span{ display:block; color:var(--mut); font-size:13px; font-weight:600; }
 .stat b{ display:block; margin-top:4px; font-size:22px; font-weight:900; color:var(--pink); }
 
-.tablewrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:#0e0b15; }
+.tablewrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--input); }
 table{ width:100%; border-collapse:collapse; font-size:14px; user-select:text; -webkit-user-select:text; }
 th,td{ padding:9px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
 th{ color:var(--mut); font-weight:700; font-size:13px; }
 td.num,th.num{ text-align:right; }
 tbody tr:last-child td{ border-bottom:none; }
 tr.click{ cursor:pointer; }
-tr.click:hover td{ background:rgba(255,43,214,.08); }
+tr.click:hover td{ background:rgba(var(--pink-rgb),.08); }
 tr.storno td{ color:var(--red); }
 tr.sum td{ font-weight:800; color:var(--pink); border-top:1px solid var(--line); }
 .empty{ padding:18px; text-align:center; color:var(--mut); }
@@ -366,32 +430,32 @@ summary{ cursor:pointer; font-weight:800; font-size:17px; padding:6px 0; }
 .newuser .field label{ margin:0; font-size:13px; color:var(--mut); font-weight:600; }
 .secretbox{
   margin:10px 0; padding:12px 14px; border:1px dashed var(--pink); border-radius:12px;
-  background:#0e0b15; user-select:text; -webkit-user-select:text; line-height:1.6;
+  background:var(--input); user-select:text; -webkit-user-select:text; line-height:1.6;
 }
 .secretbox code{ font-size:18px; font-weight:800; color:var(--pink); letter-spacing:.5px; }
 
 /* ===== NEU: Dialog (Bon / Rechnungsdetails) ===== */
 dialog{
   background:var(--card);
-  color:#f6f1ff;
+  color:var(--text);
   border:1px solid var(--pink);
   border-radius:16px;
   padding:20px;
   width:min(620px,94vw);
   max-height:90vh;
   overflow:auto;
-  box-shadow:0 0 40px rgba(255,43,214,.35);
+  box-shadow:0 0 40px rgba(var(--pink-rgb),.35);
   user-select:text;
   -webkit-user-select:text;
 }
 dialog::backdrop{ background:rgba(0,0,0,.7); }
 dialog h3{ margin-bottom:6px; }
 .kv{ color:var(--mut); font-size:14px; line-height:1.7; }
-.kv b{ color:#f6f1ff; }
+.kv b{ color:var(--text); }
 .dlgfoot{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; margin-top:14px; }
 .totalrow{ font-size:22px; font-weight:900; color:var(--pink); margin-top:10px; }
-.stornobox{ margin-top:14px; padding:12px; border:1px solid #7a2540; border-radius:12px; background:#1a0b13; }
-.stornobox textarea{ width:100%; min-height:70px; font:inherit; background:#0e0b15; color:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; margin:8px 0; }
+.stornobox{ margin-top:14px; padding:12px; border:1px solid var(--dng-line); border-radius:12px; background:var(--stbox); }
+.stornobox textarea{ width:100%; min-height:70px; font:inherit; background:var(--input); color:var(--text2); border:1px solid var(--line); border-radius:12px; padding:10px; margin:8px 0; }
 
 @media (max-width:560px){
   body{ padding:12px; }
@@ -403,10 +467,73 @@ dialog h3{ margin-bottom:6px; }
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; }
 }
+
+/* Spaß-Modus */
+.fun-on .logo-container img{ cursor:pointer; }
+.fun-confetti{ position:fixed; z-index:60; pointer-events:none; font-size:22px; }
+
+/* ===== Zahnrad + Einstellungen ===== */
+.gear{ position:fixed; top:max(12px,env(safe-area-inset-top)); left:max(12px,env(safe-area-inset-left)); z-index:50;
+  width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card2); color:var(--text);
+  font-size:22px; line-height:1; cursor:pointer; transition:transform .4s, border-color .15s, box-shadow .15s; }
+.gear:hover{ transform:rotate(70deg); border-color:var(--pink); box-shadow:0 0 14px rgba(var(--pink-rgb),.5); }
+.setsec{ margin-top:18px; }
+.setsec h4{ margin:0 0 8px; color:var(--mut); font-size:12px; letter-spacing:.9px; text-transform:uppercase; }
+.setrow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.switch{ position:relative; display:inline-block; width:54px; height:30px; flex:none; }
+.switch input{ position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
+.switch .sw{ position:absolute; inset:0; border-radius:999px; background:var(--card2); border:1px solid var(--line); transition:background .2s; pointer-events:none; }
+.switch .sw::after{ content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--text2); transition:transform .2s; }
+.switch input:checked + .sw{ background:var(--pink); border-color:var(--pink); }
+.switch input:checked + .sw::after{ transform:translateX(24px); background:var(--on-pink); }
+.switch input:focus-visible + .sw{ outline:2px solid var(--pink); outline-offset:2px; }
+.optgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:6px; }
+.optgrid .btn, .seg .btn{ margin:0; }
+.seg{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.opt[aria-pressed="true"]{ border-color:var(--pink); box-shadow:0 0 12px rgba(var(--pink-rgb),.5); color:var(--text); }
+
+/* ===== Fest-Overlay: fallende / aufsteigende Emojis (stören nie die Bedienung) ===== */
+#overlayLayer{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:40; }
+.ovp{ position:absolute; top:-8vh; opacity:.85; will-change:transform; animation:ovfall linear infinite; }
+.ovp.rise{ top:auto; bottom:-8vh; animation-name:ovrise; }
+@keyframes ovfall{ 0%{ transform:translate3d(0,0,0) rotate(0); } 50%{ transform:translate3d(var(--dx),58vh,0) rotate(180deg); } 100%{ transform:translate3d(0,114vh,0) rotate(360deg); } }
+@keyframes ovrise{ 0%{ transform:translate3d(0,0,0) rotate(0); } 50%{ transform:translate3d(var(--dx),-58vh,0) rotate(-12deg); } 100%{ transform:translate3d(0,-114vh,0) rotate(12deg); } }
+:root[data-overlay="silvester"] .card{ background:color-mix(in srgb,var(--card) 80%,transparent); }
+#fireworks{ position:fixed; inset:0; width:100%; height:100%; z-index:-1; pointer-events:none; }
+@media (prefers-reduced-motion:reduce){ #overlayLayer, #fireworks{ display:none; } }
+:root[data-theme="light"] h2{ text-shadow:none; }
+@media (max-width:700px){ .app{ padding-top:44px; } }
 </style>
 </head>
 
 <body>
+<button class="gear" id="gearBtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button>
+<div id="overlayLayer" aria-hidden="true"></div>
+
+<dialog id="settingsDlg" aria-labelledby="setTitle">
+  <h3 id="setTitle">⚙️ Einstellungen</h3>
+  <p class="hint">Gilt nur für dieses Gerät und bleibt gespeichert.</p>
+
+  <div class="setsec">
+    <h4>Darstellung</h4>
+    <div class="seg" id="setTheme" role="group" aria-label="Hell oder Dunkel"></div>
+  </div>
+
+  <div class="setsec">
+    <h4>Fest-Overlay</h4>
+    <div class="optgrid" id="setOverlay" role="group" aria-label="Fest-Overlay auswählen"></div>
+  </div>
+
+  <div class="setsec">
+    <h4>Spaß</h4>
+    <div class="setrow">
+      <label for="funSwitch">🎉 Spaß-Modus (Klick aufs Logo = Überraschung)</label>
+      <label class="switch"><input type="checkbox" id="funSwitch" role="switch" aria-label="Spaß-Modus"><span class="sw"></span></label>
+    </div>
+  </div>
+
+  <div class="dlgfoot"><button class="btn" id="setClose" type="button">Fertig</button></div>
+</dialog>
 <div class="app">
 
 <h2>CLUB 77 • Kassensystem</h2>
@@ -544,6 +671,7 @@ dialog h3{ margin-bottom:6px; }
     <div class="field"><label for="fQ">Suche</label><input id="fQ" class="input q" placeholder="Rechnungsnr. oder Produkt" maxlength="60"></div>
     <div class="field"><button class="chip" id="fToday">Heute</button></div>
     <div class="field"><button class="chip" id="fAll">Alle</button></div>
+    <div class="field" id="stornoDelWrap" hidden><button class="chip" id="stornoDelBtn" type="button">🗑️ Stornos löschen</button></div>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th>Nummer</th><th>Datum / Uhrzeit</th><th>Kassierer</th><th class="num">Artikel</th><th class="num">Betrag</th><th>Status</th></tr></thead>
@@ -552,6 +680,28 @@ dialog h3{ margin-bottom:6px; }
   <div style="text-align:center;margin-top:10px">
     <span class="hint" id="invCount"></span><br>
     <button class="btn off sm" id="invMore" hidden>Mehr laden</button>
+  </div>
+</div>
+
+<!-- Nur Administratoren: Stornobuchungen auswählen und löschen -->
+<div class="card" id="stornoDelCard" hidden>
+  <h3>🗑️ Stornos löschen</h3>
+  <p class="hint">Wähle zuerst aus, <b>von wem</b> die Stornos stammen, zeige sie an und hake die gewünschten Stornos an. Gelöschte Stornos können nicht wiederhergestellt werden. Die ursprüngliche Rechnung zählt danach wieder als nicht storniert.</p>
+  <div class="filters">
+    <div class="field"><label for="sdFrom">Von</label><input id="sdFrom" class="input" type="date"></div>
+    <div class="field"><label for="sdTo">Bis</label><input id="sdTo" class="input" type="date"></div>
+    <div class="field"><label for="sdCashier">Rechnung von (Kassierer)</label><select id="sdCashier" class="input"></select></div>
+    <div class="field"><label for="sdBy">Storno gebucht von</label><select id="sdBy" class="input"></select></div>
+    <div class="field"><button class="btn sm" id="sdShow" type="button">Stornos anzeigen</button></div>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th><input type="checkbox" id="sdAll" aria-label="Alle auswählen"></th><th>Storno</th><th>Datum / Uhrzeit</th><th>zu Rechnung</th><th>Kassierer</th><th>Gebucht von</th><th class="num">Betrag</th><th>Grund</th></tr></thead>
+    <tbody id="sdBody"></tbody>
+  </table></div>
+  <div style="text-align:center;margin-top:10px">
+    <span class="hint" id="sdInfo"></span><br>
+    <button class="btn danger" id="sdDelete" type="button" disabled>🗑️ Ausgewählte löschen</button>
+    <div class="hint" id="sdMsg" role="status"></div>
   </div>
 </div>
 </div>
@@ -632,6 +782,7 @@ dialog h3{ margin-bottom:6px; }
 
 <dialog id="dlg"></dialog>
 
+<script src="/settings.js"></script>
 <script src="/app.js"></script>
 <script src="/pwa.js"></script>
 </body>
