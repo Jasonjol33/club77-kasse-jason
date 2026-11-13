@@ -1,34 +1,41 @@
-app = "club77-kasse-jason"
-primary_region = "fra"
+# fly.toml app configuration file generated for club77-kasse-jason on 2026-11-13T19:25:12Z
+#
+# See https://docs.fly.io/reference/configuration for information about how to use this file.
+#
+
+app = 'club77-kasse-jason'
+primary_region = 'fra'
 
 [build]
-
 [env]
-  PORT = "8080"
-  DATA_DIR = "/data"
-  NODE_ENV = "production"
-  CLUB_TIMEZONE = "Europe/Berlin"
-  # Ein "Geschäftstag" beginnt um diese Uhrzeit (Umsätze nach Mitternacht zählen noch zum Abend davor)
-  DAY_START_HOUR = "6"
-  # Höchster Rabatt (%), den normale Mitarbeiter vergeben dürfen (Admins immer bis 100)
-  MAX_STAFF_DISCOUNT = "100"
+  CLUB_TIMEZONE = 'Europe/Berlin'
+  DATA_DIR = '/data'
+  DAY_START_HOUR = '6'
+  MAX_STAFF_DISCOUNT = '100'
+  NODE_ENV = 'production'
+  PORT = '8080'
+
+[[mounts]]
+  source = 'club77_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  # SQLite liegt auf einem Volume => genau EINE Maschine, dauerhaft an (Kasse soll nie "kalt starten")
-  auto_stop_machines = "off"
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
   [[http_service.checks]]
-    grace_period = "10s"
-    interval = "30s"
-    method = "GET"
-    path = "/healthz"
-    timeout = "5s"
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/healthz'
 
-[[mounts]]
-  source = "club77_data"
-  destination = "/data"
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 2048
