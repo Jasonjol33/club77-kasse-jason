@@ -62,6 +62,8 @@
   const VIEWS = ['loginView', 'setupView', 'pwView', 'appView'];
   function showOnly(id) {
     for (const v of VIEWS) $('#' + v).hidden = v !== id;
+    $$('.appOnly').forEach(el => { el.hidden = id !== 'appView'; });
+    closePops();
     if (id === 'pwView') {
       $('#pwLogout').textContent = state.pwForced ? 'Abmelden' : 'Abbrechen';
       $('#pwMsg').textContent = '';
@@ -206,6 +208,9 @@
     state.pwForced = false;
     const admin = user.role === 'admin';
     $('#whoName').textContent = user.username;
+    $('#profName').textContent = user.username;
+    setMsg('#avMsg', '');
+    renderAvatars();
     const badge = $('#whoRole');
     badge.textContent = admin ? 'Administrator' : 'Mitarbeiter';
     badge.className = 'badge' + (admin ? ' admin' : '');
@@ -216,8 +221,6 @@
     $('#tabInvoices').textContent = admin ? '📄 Alle Rechnungen' : '📄 Meine Rechnungen';
     $('#invTitle').textContent = admin ? '📄 Alle Rechnungen' : '📄 Meine Rechnungen';
     $('#fCashierWrap').hidden = !admin;
-    $('#stornoDelWrap').hidden = !admin;
-    if (!admin) $('#stornoDelCard').hidden = true;
     $('#rabatt').max = admin ? 100 : state.config.maxStaffDiscount;
     $('#sendDaily').textContent = '📈 Tagesumsatz an Discord senden';
     showOnly('appView');
@@ -311,7 +314,124 @@
     if (d > 0) sumEl.append(h('small', null, '(−' + fmt(d) + ' € Rabatt)'));
     $$('.chip[data-v]').forEach(c => c.classList.toggle('on', Number(c.dataset.v) === r));
     state.requestId = uuid(); // geänderter Warenkorb = neue Anfrage-ID
+    syncOrder(t - d, d);
   }
+
+  /* ============================================================ Aufklapp-Blätter (Bestellung / Profil) */
+  const popBtns = [['#orderBtn', '#orderPop'], ['#profBtn', '#profPop']];
+  function closePops() {
+    for (const [b, p] of popBtns) { $(p).hidden = true; $(b).setAttribute('aria-expanded', 'false'); }
+  }
+  for (const [b, p] of popBtns) {
+    $(b).addEventListener('click', e => {
+      e.stopPropagation();
+      const open = $(p).hidden;
+      closePops();
+      $(p).hidden = !open;
+      $(b).setAttribute('aria-expanded', String(open));
+      if (open && p === '#orderPop') renderOrder();
+    });
+    $(p).addEventListener('click', e => e.stopPropagation());
+  }
+  document.addEventListener('click', closePops);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePops(); });
+  $('#orderClose').addEventListener('click', closePops);
+
+  /* ============================================================ Aktuelle Bestellung: Einzelpositionen mit Teilmenge entfernen */
+  const removeQty = new Map(); // Produktname -> gewählte Menge zum Entfernen
+  let orderTotals = { total: 0, discount: 0 };
+
+  function syncOrder(total, discount) {
+    orderTotals = { total, discount };
+    let n = 0;
+    for (const q of state.cart.values()) n += q;
+    $('#orderCnt').textContent = fmt(n);
+    $('#orderCnt').classList.toggle('zero', n === 0);
+    $('#orderSum').textContent = eur(total);
+    if (!$('#orderPop').hidden) renderOrder();
+  }
+
+  function renderOrder() {
+    const box = $('#orderList');
+    box.textContent = '';
+    for (const k of [...removeQty.keys()]) if (!state.cart.has(k)) removeQty.delete(k);
+    if (state.cart.size === 0) {
+      box.append(h('div', { class: 'empty hint', style: 'text-align:center' }, 'Noch nichts in der Bestellung.', h('br'), 'Tippe auf ein Produkt, um es hinzuzufügen.'));
+      return;
+    }
+    const list = h('div', { class: 'olist' });
+    for (const [name, q] of state.cart) {
+      const price = (state.products.get(name) || { price: 0 }).price;
+      const clamp = v => Math.max(1, Math.min(q, Math.round(Number(v)) || 1));
+      const start = clamp(removeQty.get(name) || state.step);
+      removeQty.set(name, start);
+      const input = h('input', { class: 'qin', type: 'number', min: '1', max: String(q), value: String(start), inputmode: 'numeric', 'aria-label': name + ': Menge zum Entfernen' });
+      const del = h('button', { class: 'del', type: 'button' }, '🗑️ ' + start + ' entfernen');
+      const label = k => { del.textContent = '🗑️ ' + k + ' entfernen'; };
+      const setN = v => { const k = clamp(v); removeQty.set(name, k); input.value = String(k); label(k); };
+      input.addEventListener('input', () => { if (input.value !== '') { const k = clamp(input.value); removeQty.set(name, k); label(k); } });
+      input.addEventListener('change', () => setN(input.value));
+      del.addEventListener('click', () => addQty(name, -clamp(input.value)));
+      list.append(h('div', { class: 'orow' },
+        h('div', { class: 'o1' }, h('b', null, name), h('span', null, q + '× · ' + eur(q * price))),
+        h('div', { class: 'o2' },
+          h('div', { class: 'stepper' },
+            h('button', { class: 'sb', type: 'button', 'aria-label': 'Weniger', onclick: () => setN(Number(input.value) - 1) }, '−'),
+            input,
+            h('button', { class: 'sb', type: 'button', 'aria-label': 'Mehr', onclick: () => setN(Number(input.value) + 1) }, '+')),
+          h('button', { class: 'lnk', type: 'button', onclick: () => setN(q) }, 'Alle ' + fmt(q)),
+          del)));
+    }
+    box.append(list,
+      h('div', { class: 'ofoot' },
+        h('span', { class: 'hint' }, orderTotals.discount > 0 ? '(−' + fmt(orderTotals.discount) + ' € Rabatt)' : ''),
+        h('b', null, 'Gesamt: ' + eur(orderTotals.total))),
+      h('div', { class: 'obtns' },
+        h('button', { class: 'btn danger sm', type: 'button', onclick: () => { if (confirm('Gesamte Bestellung leeren?')) { state.cart.clear(); update(); } } }, 'Alles leeren'),
+        h('button', { class: 'btn', type: 'button', onclick: () => { closePops(); $('#sendBon').click(); } }, '🧾 Bon senden')));
+  }
+
+  /* ============================================================ Profilbild (wird nur auf diesem Gerät gespeichert) */
+  const avKey = () => 'club77-avatar-' + (state.user ? state.user.id : '0');
+  function getAvatar() {
+    try { const v = localStorage.getItem(avKey()); return v && v.startsWith('data:image/jpeg;base64,') ? v : ''; } catch { return ''; }
+  }
+  function renderAvatars() {
+    const src = getAvatar();
+    const initial = state.user ? state.user.username.trim().charAt(0).toUpperCase() : '?';
+    for (const sel of ['#avSmall', '#avBig']) {
+      const el = $(sel);
+      el.textContent = '';
+      if (src) el.append(h('img', { src, alt: '' })); else el.append(initial);
+    }
+    $('#avDel').hidden = !src;
+  }
+  $('#avPick').addEventListener('click', () => $('#avFile').click());
+  $('#avBig').addEventListener('click', () => $('#avFile').click());
+  $('#avFile').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (!f.type.startsWith('image/')) return setMsg('#avMsg', 'Bitte eine Bilddatei wählen.');
+    if (f.size > 10 * 1024 * 1024) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 10 MB).');
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const S = 192, m = Math.min(img.width, img.height);
+      const c = document.createElement('canvas');
+      c.width = c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      localStorage.setItem(avKey(), c.toDataURL('image/jpeg', 0.85));
+      setMsg('#avMsg', 'Profilbild gespeichert ✔', false);
+      renderAvatars();
+    } catch { setMsg('#avMsg', 'Das Bild konnte nicht gespeichert werden.'); }
+    finally { URL.revokeObjectURL(url); }
+  });
+  $('#avDel').addEventListener('click', () => {
+    try { localStorage.removeItem(avKey()); } catch { /* Speicher nicht verfügbar */ }
+    setMsg('#avMsg', '');
+    renderAvatars();
+  });
 
   function resetCart() {
     state.cart.clear();
@@ -526,131 +646,6 @@
   $('#fToday').addEventListener('click', () => { state.inv.touched = true; $('#fFrom').value = today(); $('#fTo').value = today(); loadInvoices(true); });
   $('#fAll').addEventListener('click', () => { state.inv.touched = true; $('#fFrom').value = ''; $('#fTo').value = ''; loadInvoices(true); });
   $('#invMore').addEventListener('click', () => loadInvoices(false));
-
-  /* ============================================================ Stornos auswählen & löschen (nur Admin) */
-  const sd = { rows: [], selected: new Set() };
-
-  async function sdFillSelects() {
-    try {
-      const r = await api('/api/admin/users?former=1');
-      for (const [id, label] of [['sdCashier', 'Alle Mitarbeiter'], ['sdBy', 'Alle']]) {
-        const sel = $('#' + id), keep = sel.value;
-        sel.textContent = '';
-        sel.append(h('option', { value: '' }, label));
-        for (const u of r.users) sel.append(h('option', { value: String(u.id) }, u.username + (u.archived ? ' (gelöscht)' : u.active ? '' : ' (deaktiviert)')));
-        sel.value = keep || '';
-      }
-    } catch { /* Filter bleibt leer */ }
-  }
-
-  function sdUpdate() {
-    const n = sd.selected.size;
-    const sum = sd.rows.filter(r => sd.selected.has(r.id)).reduce((a, r) => a + r.total, 0);
-    $('#sdDelete').disabled = n === 0;
-    $('#sdDelete').textContent = n ? `🗑️ ${n} Storno${n === 1 ? '' : 's'} löschen` : '🗑️ Ausgewählte löschen';
-    $('#sdAll').checked = sd.rows.length > 0 && n === sd.rows.length;
-    $('#sdInfo').textContent = sd.rows.length ? `${n} von ${sd.rows.length} ausgewählt${n ? ' (' + eur(sum) + ')' : ''}` : '';
-  }
-
-  async function sdLoad() {
-    const p = new URLSearchParams({ kind: 'storno', limit: '200' });
-    if ($('#sdFrom').value) p.set('from', $('#sdFrom').value);
-    if ($('#sdTo').value) p.set('to', $('#sdTo').value);
-    if ($('#sdCashier').value) p.set('cashier', $('#sdCashier').value);
-    if ($('#sdBy').value) p.set('by', $('#sdBy').value);
-    const body = $('#sdBody');
-    $('#sdMsg').textContent = '';
-    try {
-      const list = await api('/api/invoices?' + p);
-      sd.rows = list.invoices; sd.selected.clear();
-      body.textContent = '';
-      for (const r of list.invoices) {
-        const cb = h('input', { type: 'checkbox', 'aria-label': 'Storno ' + r.number + ' auswählen' });
-        cb.addEventListener('change', () => { if (cb.checked) sd.selected.add(r.id); else sd.selected.delete(r.id); sdUpdate(); });
-        body.append(h('tr', { class: 'storno' }, h('td', null, cb), h('td', null, r.number), h('td', null, fmtDT(r.createdAt)),
-          h('td', null, r.refNumber), h('td', null, r.cashierName), h('td', null, r.createdByName),
-          h('td', { class: 'num' }, eur(r.total)), h('td', null, r.stornoReason || '')));
-      }
-      if (!list.invoices.length) body.append(h('tr', null, h('td', { colspan: '8', class: 'empty' }, 'Keine Stornos gefunden.')));
-      if (list.total > list.invoices.length) $('#sdMsg').textContent = `Es werden die neuesten ${list.invoices.length} von ${list.total} Stornos angezeigt. Grenze den Filter ein, um weitere zu sehen.`;
-      sdUpdate();
-    } catch (e) { $('#sdMsg').textContent = e.message; }
-  }
-
-  $('#stornoDelBtn').addEventListener('click', async () => {
-    const card = $('#stornoDelCard');
-    card.hidden = !card.hidden;
-    if (card.hidden) return;
-    await sdFillSelects();
-    await sdLoad();
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-  $('#sdShow').addEventListener('click', sdLoad);
-  $('#sdAll').addEventListener('change', e => {
-    sd.selected.clear();
-    if (e.target.checked) for (const r of sd.rows) sd.selected.add(r.id);
-    $$('#sdBody input[type=checkbox]').forEach(cb => { cb.checked = e.target.checked; });
-    sdUpdate();
-  });
-  $('#sdDelete').addEventListener('click', async () => {
-    const picked = sd.rows.filter(r => sd.selected.has(r.id));
-    if (!picked.length) return;
-    const sum = picked.reduce((a, r) => a + r.total, 0);
-    const names = picked.map(r => r.number).slice(0, 8).join(', ') + (picked.length > 8 ? ' …' : '');
-    if (!confirm(`${picked.length} Stornobuchung(en) (${names}) mit zusammen ${eur(sum)} ENDGÜLTIG löschen?\n\nDas kann nicht rückgängig gemacht werden. Die zugehörigen Rechnungen gelten danach wieder als nicht storniert.`)) return;
-    $('#sdDelete').disabled = true;
-    try {
-      const r = await api('/api/invoices/delete-stornos', { method: 'POST', body: { ids: picked.map(x => x.id) } });
-      await sdLoad();
-      $('#sdMsg').textContent = `✅ ${r.deleted} Storno(s) gelöscht.`;
-      loadInvoices(true);
-    } catch (e) { $('#sdMsg').textContent = e.message; sdUpdate(); }
-  });
-
-  /* ============================================================ Spaß-Modus (Schalter): Klick aufs Logo = zufälliger Effekt */
-  const fun = { on: false, last: -1 };
-  const FUN_EFFECTS = [
-    el => el.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 900, easing: 'ease-in-out' }),
-    el => el.animate([{ transform: 'rotate(0) scale(1)' }, { transform: 'rotate(-720deg) scale(1.4)', offset: .6 }, { transform: 'rotate(-720deg) scale(1)' }], { duration: 1400, easing: 'ease-in-out' }),
-    el => el.animate([{ transform: 'perspective(600px) rotateY(0)' }, { transform: 'perspective(600px) rotateY(360deg)' }], { duration: 1000, easing: 'ease-in-out' }),
-    el => el.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-60px)', offset: .3 }, { transform: 'translateY(0)', offset: .55 }, { transform: 'translateY(-25px)', offset: .75 }, { transform: 'translateY(0)' }], { duration: 900, easing: 'ease-out' }),
-    el => el.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-14deg)' }, { transform: 'rotate(14deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(0)' }], { duration: 700 }),
-    el => el.animate([{ filter: 'hue-rotate(0)' }, { filter: 'hue-rotate(360deg)' }], { duration: 1500 }),
-    el => el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.8)', offset: .4 }, { transform: 'scale(.5)', offset: .7 }, { transform: 'scale(1)' }], { duration: 900, easing: 'ease-in-out' }),
-    el => el.animate([{ transform: 'rotate(0) scale(1)', filter: 'hue-rotate(0)' }, { transform: 'rotate(180deg) scale(1.3)', filter: 'hue-rotate(180deg)' }, { transform: 'rotate(360deg) scale(1)', filter: 'hue-rotate(360deg)' }], { duration: 1200, easing: 'ease-in-out' }),
-  ];
-  function funConfetti(x, y) {
-    const set = ['🎉', '✨', '🪩', '🍸', '🎶', '💜', '🔥'];
-    for (let i = 0; i < 12; i++) {
-      const p = h('span', { class: 'fun-confetti', 'aria-hidden': 'true' }, set[Math.floor(Math.random() * set.length)]);
-      p.style.left = x + 'px'; p.style.top = y + 'px';
-      (document.querySelector('dialog[open]') || document.body).append(p);
-      const ang = Math.random() * Math.PI * 2, dist = 70 + Math.random() * 110;
-      const anim = p.animate([{ transform: 'translate(0,0) scale(.6)', opacity: 1 },
-        { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist + 60}px) rotate(${Math.random() * 540 - 270}deg) scale(1.2)`, opacity: 0 }],
-        { duration: 900 + Math.random() * 500, easing: 'ease-out' });
-      anim.onfinish = () => p.remove();
-    }
-  }
-  function funPlay(ev) {
-    const img = $('.logo-container img');
-    if (!img) return;
-    let i;
-    do { i = Math.floor(Math.random() * FUN_EFFECTS.length); } while (i === fun.last && FUN_EFFECTS.length > 1);
-    fun.last = i;
-    FUN_EFFECTS[i](img);
-    const r = (ev && ev.target ? ev.target : img).getBoundingClientRect();
-    funConfetti(r.left + r.width / 2, r.top + r.height / 2);
-  }
-  function funSet(on) {
-    fun.on = on;
-    document.body.classList.toggle('fun-on', on);
-    $('#funSwitch').checked = on;
-    try { localStorage.setItem('c77fun', on ? '1' : '0'); } catch { /* Speicher nicht verfügbar */ }
-  }
-  $('#funSwitch').addEventListener('change', ev => { funSet(ev.target.checked); if (fun.on) funPlay(ev); });
-  $('.logo-container img').addEventListener('click', ev => { if (fun.on) funPlay(ev); });
-  try { if (localStorage.getItem('c77fun') === '1') funSet(true); } catch { /* ignorieren */ }
 
   /* ============================================================ ADMIN */
   async function loadAdmin() { await refreshConfig(); loadAdminStats(); loadUsers(); }

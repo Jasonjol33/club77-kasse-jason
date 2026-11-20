@@ -12,7 +12,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="/icon-192.png">
-<script src="/theme-init.js"></script>
 
 <style>
 :root{
@@ -24,68 +23,7 @@
   --mut:#9d94b5;
   --red:#ff5a6e;
   --green:#4ade80;
-  --pink-rgb:255,43,214;
-  --text:#f6f1ff;
-  --text2:#fff;
-  --soft:#d9d0ee;
-  --input:var(--input);
-  --has:#2b1034;
-  --dng-bg:#3a1220;
-  --dng-line:#7a2540;
-  --dng-text:#ffd6de;
-  --stbox:#1a0b13;
-  --on-pink:#fff;
-  --glow-mix:16%;
-  color-scheme:dark;
 }
-
-/* ===== Hell-Modus ===== */
-:root[data-theme="light"]{
-  --pink:#d4149f;
-  --pink-rgb:212,20,159;
-  --bg:#f6f2fb;
-  --card:#ffffff;
-  --card2:#efe8f8;
-  --line:#d8cce8;
-  --mut:#6b6280;
-  --red:#c81e3a;
-  --green:#15803d;
-  --text:#1c1428;
-  --text2:#1c1428;
-  --soft:#3d3354;
-  --input:#ffffff;
-  --has:#fbe6f6;
-  --dng-bg:#fde4e8;
-  --dng-line:#e08a9a;
-  --dng-text:#8a1228;
-  --stbox:#fdecef;
-  --on-pink:#fff;
-  --glow-mix:13%;
-  color-scheme:light;
-}
-
-/* ===== Fest-Overlays: färben den Akzent um (Standard = keins) ===== */
-:root[data-overlay="weihnachten"]{ --pink:#ff3b4e; --pink-rgb:255,59,78; }
-:root[data-overlay="silvester"]{ --pink:#ffc83d; --pink-rgb:255,200,61; --on-pink:#1a1020; }
-:root[data-overlay="valentin"]{ --pink:#ff4d8d; --pink-rgb:255,77,141; }
-:root[data-overlay="karneval"]{ --pink:#a855f7; --pink-rgb:168,85,247; }
-:root[data-overlay="ostern"]{ --pink:#34d399; --pink-rgb:52,211,153; --on-pink:#1a1020; }
-:root[data-overlay="oktoberfest"]{ --pink:#3b9cff; --pink-rgb:59,156,255; --on-pink:#1a1020; }
-:root[data-overlay="halloween"]{ --pink:#ff7a1a; --pink-rgb:255,122,26; --on-pink:#1a1020; }
-:root[data-theme="light"][data-overlay="weihnachten"]{ --pink:#c81e33; --pink-rgb:200,30,51; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="silvester"]{ --pink:#9a6f00; --pink-rgb:154,111,0; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="valentin"]{ --pink:#c42a5f; --pink-rgb:196,42,95; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="karneval"]{ --pink:#7e22ce; --pink-rgb:126,34,206; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="ostern"]{ --pink:#0b7a54; --pink-rgb:11,122,84; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="oktoberfest"]{ --pink:#1d6fd6; --pink-rgb:29,111,214; --on-pink:#fff; }
-:root[data-theme="light"][data-overlay="halloween"]{ --pink:#bf4a05; --pink-rgb:191,74,5; --on-pink:#fff; }
-:root[data-overlay="weihnachten"] .app > h2::before{ content:"🎄 "; }
-:root[data-overlay="silvester"] .app > h2::before{ content:"🎆 "; }
-:root[data-overlay="valentin"] .app > h2::before{ content:"💘 "; }
-:root[data-overlay="karneval"] .app > h2::before{ content:"🎭 "; }
-:root[data-overlay="ostern"] .app > h2::before{ content:"🐣 "; }
-:root[data-overlay="oktoberfest"] .app > h2::before{ content:"🍺 "; }
-:root[data-overlay="halloween"] .app > h2::before{ content:"🎃 "; }
 
 *{
   box-sizing:border-box;
@@ -107,8 +45,7 @@ body{
   margin:0;
   font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
   background:radial-gradient(ellipse at top,#2a0526 0,var(--bg) 65%) fixed;
-  background:radial-gradient(ellipse at top,color-mix(in srgb,var(--pink) var(--glow-mix),var(--bg)) 0,var(--bg) 65%) fixed;
-  color:var(--text);
+  color:#f6f1ff;
   padding:20px;
 }
 
@@ -125,7 +62,7 @@ h2{
   font-size:30px;
   font-weight:800;
   letter-spacing:.5px;
-  text-shadow:0 0 18px rgba(var(--pink-rgb),.6);
+  text-shadow:0 0 18px rgba(255,43,214,.6);
 }
 
 h3{
@@ -171,14 +108,14 @@ h3{
 
 .item:hover{
   border-color:var(--pink);
-  box-shadow:0 0 14px rgba(var(--pink-rgb),.45);
+  box-shadow:0 0 14px rgba(255,43,214,.45);
 }
 
 .item:active{ transform:scale(.98); }
 
 .item.has{
   border-color:var(--pink);
-  background:linear-gradient(160deg,var(--has),var(--card2));
+  background:linear-gradient(160deg,#2b1034,var(--card2));
 }
 
 .count{
@@ -201,8 +138,8 @@ h3{
   height:34px;
   border-radius:10px;
   border:1px solid var(--line);
-  background:var(--input);
-  color:var(--text2);
+  background:#0e0b15;
+  color:#fff;
   font:inherit;
   font-weight:900;
   font-size:20px;
@@ -218,7 +155,7 @@ h3{
   border:none;
   padding:11px 18px;
   border-radius:12px;
-  color:var(--on-pink);
+  color:#fff;
   font:inherit;
   font-weight:700;
   cursor:pointer;
@@ -227,22 +164,22 @@ h3{
   transition:box-shadow .15s, transform .1s;
 }
 
-.btn:hover{ box-shadow:0 0 16px rgba(var(--pink-rgb),.6); }
+.btn:hover{ box-shadow:0 0 16px rgba(255,43,214,.6); }
 .btn:active{ transform:scale(.97); }
 .btn:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; transform:none; }
 
 .btn.off{
   background:var(--card2);
   border:1px solid var(--line);
-  color:var(--soft);
+  color:#d9d0ee;
 }
 
 .btn.off:hover{ border-color:var(--pink); box-shadow:none; }
 
 .btn.danger{
-  background:var(--dng-bg);
-  border:1px solid var(--dng-line);
-  color:var(--dng-text);
+  background:#3a1220;
+  border:1px solid #7a2540;
+  color:#ffd6de;
 }
 .btn.danger:hover{ border-color:var(--red); box-shadow:none; }
 
@@ -254,8 +191,8 @@ h3{
   font:inherit;
   width:100%;
   max-width:340px;
-  background:var(--input);
-  color:var(--text2);
+  background:#0e0b15;
+  color:#fff;
   border:1px solid var(--line);
   border-radius:12px;
   padding:11px 14px;
@@ -283,7 +220,7 @@ h3{
   font:inherit;
   font-weight:800;
   font-size:13px;
-  color:var(--text2);
+  color:#fff;
   background:var(--card2);
   border:1px solid var(--line);
   border-radius:999px;
@@ -298,8 +235,7 @@ h3{
 .chip.on{
   background:var(--pink);
   border-color:var(--pink);
-  color:var(--on-pink);
-  box-shadow:0 0 12px rgba(var(--pink-rgb),.5);
+  box-shadow:0 0 12px rgba(255,43,214,.5);
 }
 
 #sum small{
@@ -322,7 +258,7 @@ hr{
 }
 
 #dailyBox{
-  background:var(--input);
+  background:#0e0b15;
   border:1px solid var(--line);
   padding:12px 14px;
   border-radius:12px;
@@ -344,7 +280,7 @@ hr{
   max-width:min(460px,90%);
   height:auto;
   border-radius:14px;
-  box-shadow:0 6px 30px rgba(var(--pink-rgb),.3);
+  box-shadow:0 6px 30px rgba(255,43,214,.3);
 }
 
 /* ===== SCHRITTWEITE BUTTONS ===== */
@@ -356,8 +292,8 @@ hr{
 .step-buttons .btn.on{
   background:var(--pink);
   border:none;
-  color:var(--on-pink);
-  box-shadow:0 0 16px rgba(var(--pink-rgb),.6);
+  color:#fff;
+  box-shadow:0 0 16px rgba(255,43,214,.6);
 }
 
 /* ===== NEU: Anmeldung, Leiste, Tabs ===== */
@@ -410,14 +346,14 @@ select.input{ appearance:auto; }
 .stat span{ display:block; color:var(--mut); font-size:13px; font-weight:600; }
 .stat b{ display:block; margin-top:4px; font-size:22px; font-weight:900; color:var(--pink); }
 
-.tablewrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--input); }
+.tablewrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:#0e0b15; }
 table{ width:100%; border-collapse:collapse; font-size:14px; user-select:text; -webkit-user-select:text; }
 th,td{ padding:9px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
 th{ color:var(--mut); font-weight:700; font-size:13px; }
 td.num,th.num{ text-align:right; }
 tbody tr:last-child td{ border-bottom:none; }
 tr.click{ cursor:pointer; }
-tr.click:hover td{ background:rgba(var(--pink-rgb),.08); }
+tr.click:hover td{ background:rgba(255,43,214,.08); }
 tr.storno td{ color:var(--red); }
 tr.sum td{ font-weight:800; color:var(--pink); border-top:1px solid var(--line); }
 .empty{ padding:18px; text-align:center; color:var(--mut); }
@@ -430,32 +366,32 @@ summary{ cursor:pointer; font-weight:800; font-size:17px; padding:6px 0; }
 .newuser .field label{ margin:0; font-size:13px; color:var(--mut); font-weight:600; }
 .secretbox{
   margin:10px 0; padding:12px 14px; border:1px dashed var(--pink); border-radius:12px;
-  background:var(--input); user-select:text; -webkit-user-select:text; line-height:1.6;
+  background:#0e0b15; user-select:text; -webkit-user-select:text; line-height:1.6;
 }
 .secretbox code{ font-size:18px; font-weight:800; color:var(--pink); letter-spacing:.5px; }
 
 /* ===== NEU: Dialog (Bon / Rechnungsdetails) ===== */
 dialog{
   background:var(--card);
-  color:var(--text);
+  color:#f6f1ff;
   border:1px solid var(--pink);
   border-radius:16px;
   padding:20px;
   width:min(620px,94vw);
   max-height:90vh;
   overflow:auto;
-  box-shadow:0 0 40px rgba(var(--pink-rgb),.35);
+  box-shadow:0 0 40px rgba(255,43,214,.35);
   user-select:text;
   -webkit-user-select:text;
 }
 dialog::backdrop{ background:rgba(0,0,0,.7); }
 dialog h3{ margin-bottom:6px; }
 .kv{ color:var(--mut); font-size:14px; line-height:1.7; }
-.kv b{ color:var(--text); }
+.kv b{ color:#f6f1ff; }
 .dlgfoot{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; margin-top:14px; }
 .totalrow{ font-size:22px; font-weight:900; color:var(--pink); margin-top:10px; }
-.stornobox{ margin-top:14px; padding:12px; border:1px solid var(--dng-line); border-radius:12px; background:var(--stbox); }
-.stornobox textarea{ width:100%; min-height:70px; font:inherit; background:var(--input); color:var(--text2); border:1px solid var(--line); border-radius:12px; padding:10px; margin:8px 0; }
+.stornobox{ margin-top:14px; padding:12px; border:1px solid #7a2540; border-radius:12px; background:#1a0b13; }
+.stornobox textarea{ width:100%; min-height:70px; font:inherit; background:#0e0b15; color:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; margin:8px 0; }
 
 @media (max-width:560px){
   body{ padding:12px; }
@@ -468,111 +404,178 @@ dialog h3{ margin-bottom:6px; }
   *{ transition:none !important; }
 }
 
-/* Spaß-Modus */
-.fun-on .logo-container img{ cursor:pointer; }
-.fun-confetti{ position:fixed; z-index:60; pointer-events:none; font-size:22px; }
-
-/* ===== Zahnrad + Einstellungen ===== */
-.gear{ position:fixed; top:max(12px,env(safe-area-inset-top)); left:max(12px,env(safe-area-inset-left)); z-index:50;
-  width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card2); color:var(--text);
-  font-size:22px; line-height:1; cursor:pointer; transition:transform .4s, border-color .15s, box-shadow .15s; }
-.gear:hover{ transform:rotate(70deg); border-color:var(--pink); box-shadow:0 0 14px rgba(var(--pink-rgb),.5); }
-.setsec{ margin-top:18px; }
-.setsec h4{ margin:0 0 8px; color:var(--mut); font-size:12px; letter-spacing:.9px; text-transform:uppercase; }
-.setrow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.switch{ position:relative; display:inline-block; width:54px; height:30px; flex:none; }
-.switch input{ position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
-.switch .sw{ position:absolute; inset:0; border-radius:999px; background:var(--card2); border:1px solid var(--line); transition:background .2s; pointer-events:none; }
-.switch .sw::after{ content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:var(--text2); transition:transform .2s; }
-.switch input:checked + .sw{ background:var(--pink); border-color:var(--pink); }
-.switch input:checked + .sw::after{ transform:translateX(24px); background:var(--on-pink); }
-.switch input:focus-visible + .sw{ outline:2px solid var(--pink); outline-offset:2px; }
-.optgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:6px; }
-.optgrid .btn, .seg .btn{ margin:0; }
-.seg{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.opt[aria-pressed="true"]{ border-color:var(--pink); box-shadow:0 0 12px rgba(var(--pink-rgb),.5); color:var(--text); }
-
-/* ===== Fest-Overlay: fallende / aufsteigende Emojis (stören nie die Bedienung) ===== */
-#overlayLayer{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:40; }
-.ovp{ position:absolute; top:-8vh; opacity:.85; will-change:transform; animation:ovfall linear infinite; }
-.ovp.rise{ top:auto; bottom:-8vh; animation-name:ovrise; }
-@keyframes ovfall{ 0%{ transform:translate3d(0,0,0) rotate(0); } 50%{ transform:translate3d(var(--dx),58vh,0) rotate(180deg); } 100%{ transform:translate3d(0,114vh,0) rotate(360deg); } }
-@keyframes ovrise{ 0%{ transform:translate3d(0,0,0) rotate(0); } 50%{ transform:translate3d(var(--dx),-58vh,0) rotate(-12deg); } 100%{ transform:translate3d(0,-114vh,0) rotate(12deg); } }
-:root[data-overlay="silvester"] .card{ background:color-mix(in srgb,var(--card) 80%,transparent); }
-#fireworks{ position:fixed; inset:0; width:100%; height:100%; z-index:-1; pointer-events:none; }
-@media (prefers-reduced-motion:reduce){ #overlayLayer, #fireworks{ display:none; } }
-:root[data-theme="light"] h2{ text-shadow:none; }
-@media (max-width:700px){ .app{ padding-top:44px; } }
-
-/* ===== Fest-Overlays: Deko auf jedem Button/jeder Karte (Schnee, Bierschaum, Gras, Schleim, Herzen, Konfetti, Sterne) ===== */
-:root[data-overlay="weihnachten"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23d3e3f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 12C3 7 7 6 11 8C13 3 20 2 24 6C28 1 36 2 39 7C43 4 50 4 53 8C57 3 65 4 68 8C70 9 71.5 11 72 12L72 15L62 15C62 20 56 20 56 15L40 15C40 22 33 22 33 15L22 15C22 19 17 19 17 15L0 15Z' fill='url(%23g)' stroke='none' stroke-width='.6'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='white'/%3E%3Ccircle cx='46' cy='7' r='.7' fill='white'/%3E%3Ccircle cx='62' cy='9' r='.8' fill='white'/%3E%3C/svg%3E"); }
-:root[data-overlay="weihnachten"][data-theme="light"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f8fbff'/%3E%3Cstop offset='1' stop-color='%23b6cdee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 12C3 7 7 6 11 8C13 3 20 2 24 6C28 1 36 2 39 7C43 4 50 4 53 8C57 3 65 4 68 8C70 9 71.5 11 72 12L72 15L62 15C62 20 56 20 56 15L40 15C40 22 33 22 33 15L22 15C22 19 17 19 17 15L0 15Z' fill='url(%23g)' stroke='%237f9fcf' stroke-width='.6'/%3E%3Ccircle cx='20' cy='8' r='.9' fill='white'/%3E%3Ccircle cx='46' cy='7' r='.7' fill='white'/%3E%3Ccircle cx='62' cy='9' r='.8' fill='white'/%3E%3C/svg%3E"); --deco-sh:rgba(40,70,120,.35); }
-:root[data-overlay="oktoberfest"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fffef6'/%3E%3Cstop offset='1' stop-color='%23ffe7a0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 12C3 7 7 6 11 8C13 3 20 2 24 6C28 1 36 2 39 7C43 4 50 4 53 8C57 3 65 4 68 8C70 9 71.5 11 72 12L72 15L62 15C62 20 56 20 56 15L40 15C40 22 33 22 33 15L22 15C22 19 17 19 17 15L0 15Z' fill='url(%23g)' stroke='%23e6bd4f' stroke-width='.6'/%3E%3Cg fill='none' stroke='%2523e6bd4f' stroke-width='.7'%3E%3Ccircle cx='14' cy='10' r='2'/%3E%3Ccircle cx='34' cy='8' r='2.6'/%3E%3Ccircle cx='55' cy='11' r='1.8'/%3E%3C/g%3E%3C/svg%3E"); }
-:root[data-overlay="halloween"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b8f55a'/%3E%3Cstop offset='1' stop-color='%234fb81f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 12C3 7 7 6 11 8C13 3 20 2 24 6C28 1 36 2 39 7C43 4 50 4 53 8C57 3 65 4 68 8C70 9 71.5 11 72 12L72 15L62 15C62 20 56 20 56 15L40 15C40 22 33 22 33 15L22 15C22 19 17 19 17 15L0 15Z' fill='url(%23g)' stroke='%232f8f12' stroke-width='.6'/%3E%3Cellipse cx='14' cy='9' rx='3' ry='1.1' fill='white' opacity='.6'/%3E%3Cellipse cx='47' cy='8' rx='3' ry='1' fill='white' opacity='.5'/%3E%3C/svg%3E"); }
-:root[data-overlay="ostern"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2386e68a'/%3E%3Cstop offset='1' stop-color='%232f9e4a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 22L3 8L6 22L10 6L13 22L17 9L20 22L25 5L28 22L32 8L35 22L40 7L43 22L47 9L50 22L55 6L58 22L62 8L65 22L69 7L72 22Z' fill='url(%23g)'/%3E%3Cg%3E%3Ccircle cx='10' cy='5' r='2.3' fill='%23ff8ac0'/%3E%3Ccircle cx='25' cy='4' r='2.3' fill='%23ffd84a'/%3E%3Ccircle cx='40' cy='6' r='2.3' fill='%23fff'/%3E%3Ccircle cx='55' cy='5' r='2.3' fill='%23ff8ac0'/%3E%3C/g%3E%3Cg fill='%23ffb300'%3E%3Ccircle cx='10' cy='5' r='.8'/%3E%3Ccircle cx='25' cy='4' r='.8'/%3E%3Ccircle cx='40' cy='6' r='.8'/%3E%3Ccircle cx='55' cy='5' r='.8'/%3E%3C/g%3E%3C/svg%3E"); }
-:root[data-overlay="valentin"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cpath transform='translate(12 12) scale(1.3)' d='M0 -1.5C0 -4 -4.5 -4 -4.5 -1C-4.5 2 0 4 0 6C0 4 4.5 2 4.5 -1C4.5 -4 0 -4 0 -1.5Z' fill='%23ff4d79'/%3E%3Cpath transform='translate(34 9) scale(0.9)' d='M0 -1.5C0 -4 -4.5 -4 -4.5 -1C-4.5 2 0 4 0 6C0 4 4.5 2 4.5 -1C4.5 -4 0 -4 0 -1.5Z' fill='%23ff9db8'/%3E%3Cpath transform='translate(52 13) scale(1.5)' d='M0 -1.5C0 -4 -4.5 -4 -4.5 -1C-4.5 2 0 4 0 6C0 4 4.5 2 4.5 -1C4.5 -4 0 -4 0 -1.5Z' fill='%23e11d48'/%3E%3Cpath transform='translate(66 9) scale(0.8)' d='M0 -1.5C0 -4 -4.5 -4 -4.5 -1C-4.5 2 0 4 0 6C0 4 4.5 2 4.5 -1C4.5 -4 0 -4 0 -1.5Z' fill='%23ffc2d1'/%3E%3C/svg%3E"); }
-:root[data-overlay="karneval"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Crect x='4' y='9' width='6' height='3' rx='.6' transform='rotate(30 7.0 10.5)' fill='%23ff2bd6'/%3E%3Crect x='18' y='14' width='5' height='3' rx='.6' transform='rotate(-20 20.5 15.5)' fill='%23ffd400'/%3E%3Crect x='31' y='7' width='6' height='3' rx='.6' transform='rotate(50 34.0 8.5)' fill='%232dd4ff'/%3E%3Crect x='44' y='13' width='5' height='3' rx='.6' transform='rotate(10 46.5 14.5)' fill='%237cff4a'/%3E%3Crect x='56' y='8' width='6' height='3' rx='.6' transform='rotate(-40 59.0 9.5)' fill='%23ff7a1a'/%3E%3Crect x='66' y='14' width='4' height='3' rx='.6' transform='rotate(25 68.0 15.5)' fill='%23a855f7'/%3E%3Ccircle cx='26' cy='9' r='1.6' fill='%237cff4a'/%3E%3Ccircle cx='51' cy='6' r='1.6' fill='%23ff2bd6'/%3E%3C/svg%3E"); }
-:root[data-overlay="silvester"]{ --deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='22' viewBox='0 0 72 22'%3E%3Cpath transform='translate(10 9)' d='M0 -5L1.25 -1.25L5 0L1.25 1.25L0 5L-1.25 1.25L-5 0L-1.25 -1.25Z' fill='%23ffd84a'/%3E%3Cpath transform='translate(30 13)' d='M0 -3.2L0.8 -0.8L3.2 0L0.8 0.8L0 3.2L-0.8 0.8L-3.2 0L-0.8 -0.8Z' fill='%23ffffff'/%3E%3Cpath transform='translate(48 8)' d='M0 -4.5L1.125 -1.125L4.5 0L1.125 1.125L0 4.5L-1.125 1.125L-4.5 0L-1.125 -1.125Z' fill='%23ffc400'/%3E%3Cpath transform='translate(64 12)' d='M0 -3L0.75 -0.75L3 0L0.75 0.75L0 3L-0.75 0.75L-3 0L-0.75 -0.75Z' fill='%23e6e6ff'/%3E%3Ccircle cx='20' cy='6' r='1' fill='%23fff3b0'/%3E%3Ccircle cx='39' cy='14' r='1' fill='%23fff3b0'/%3E%3Ccircle cx='58' cy='5' r='1' fill='%23fff3b0'/%3E%3C/svg%3E"); }
-:root[data-overlay] :is(.btn,.chip,.card:not(dialog)){ position:relative; }
-:root[data-overlay] :is(.btn,.chip,.item,.card:not(dialog),.gear)::before{
-  content:""; position:absolute; left:3%; right:3%; top:-13px; height:22px; z-index:2; pointer-events:none;
-  background:var(--deco) repeat-x 0 0 / auto 22px;
-  -webkit-mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);
-  mask:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);
-  filter:drop-shadow(0 1px 1px var(--deco-sh,rgba(0,0,0,.35)));
+/* =====================================================================
+   v4 – modernes Design (überschreibt die Basis-Styles oben)
+   ===================================================================== */
+:root{ --violet:#8b5cf6; --line:rgba(255,255,255,.09); --r:20px; }
+body{
+  background:
+    radial-gradient(900px 420px at 50% -60px,rgba(255,43,214,.26),transparent 70%),
+    radial-gradient(700px 520px at 100% 35%,rgba(139,92,246,.14),transparent 70%),
+    var(--bg);
+  background-attachment:fixed;
+  padding:20px 20px 60px;
 }
-:root[data-overlay] :is(.btn,.chip,.item,.card:not(dialog)):nth-child(2n)::before{ background-position-x:23px; }
-:root[data-overlay] :is(.btn,.chip,.item,.card:not(dialog)):nth-child(3n)::before{ background-position-x:47px; }
-:root[data-overlay] .gear::before{ left:12%; right:12%; top:-9px; }
-:root[data-overlay] .gear:hover{ transform:scale(1.08); }
-:root[data-overlay="valentin"] :is(.btn,.chip,.item,.card,.gear)::before{ animation:fxbeat 2.2s ease-in-out infinite; transform-origin:50% 80%; }
-:root[data-overlay="silvester"] :is(.btn,.chip,.item,.card,.gear)::before{ animation:fxtw 2.6s ease-in-out infinite; }
-@keyframes fxbeat{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
-@keyframes fxtw{ 0%,100%{ opacity:.6; } 50%{ opacity:1; } }
-@media (prefers-reduced-motion:reduce){ :root[data-overlay] ::before{ animation:none !important; } }
-#fxBack, #fxFront{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; }
-#fxBack{ z-index:-1; }
-#fxFront{ z-index:45; }
-@media (prefers-reduced-motion:reduce){ #fxBack, #fxFront{ display:none; } }
+h3{ font-size:18px; letter-spacing:.2px; }
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  border:1px solid var(--line); border-radius:var(--r); padding:20px;
+  backdrop-filter:blur(10px); box-shadow:0 14px 40px -22px #000;
+}
+.btn{ background:linear-gradient(135deg,var(--pink),#b91fd0); border-radius:14px; }
+.btn.off{ background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.btn.danger{ background:rgba(255,90,110,.12); border:1px solid rgba(255,90,110,.45); }
+
+/* Kopf */
+.hero{ display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:14px; position:relative; z-index:30; }
+.heroC{ text-align:center; display:grid; gap:14px; justify-items:center; }
+.heroC h2{ font-size:28px; }
+.logo-container img{ max-width:min(340px,100%); border-radius:18px; }
+.slot{ position:relative; }
+.slotL{ justify-self:start; } .slotR{ justify-self:end; }
+.pill{
+  display:inline-flex; align-items:center; gap:10px; font:inherit; font-weight:700; color:#fff; cursor:pointer;
+  background:rgba(23,17,31,.85); border:1px solid var(--line); border-radius:999px; padding:8px 14px; min-height:46px;
+  backdrop-filter:blur(10px); transition:border-color .15s, box-shadow .15s;
+}
+.pill:hover,.pill[aria-expanded="true"]{ border-color:var(--pink); box-shadow:0 0 18px rgba(255,43,214,.35); }
+.cnt{ min-width:26px; height:26px; padding:0 8px; border-radius:999px; background:var(--pink); display:grid; place-items:center; font-size:13px; font-weight:900; }
+.cnt.zero{ background:var(--card2); color:var(--mut); }
+.osum{ color:var(--mut); font-weight:600; font-size:14px; }
+.av{ width:32px; height:32px; border-radius:50%; flex:none; overflow:hidden; display:grid; place-items:center; font-weight:800; font-size:14px; background:linear-gradient(135deg,var(--violet),var(--pink)); border:0; padding:0; color:#fff; font-family:inherit; }
+.av img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* Aufklapp-Blätter */
+.pop{
+  position:absolute; top:calc(100% + 10px); z-index:40; width:min(400px,calc(100vw - 24px));
+  background:var(--card); border:1px solid var(--line); border-radius:22px; padding:16px;
+  box-shadow:0 28px 70px rgba(0,0,0,.65),0 0 0 1px rgba(255,43,214,.1); text-align:left;
+  transform-origin:top; animation:popin .16s ease-out;
+}
+.slotL .pop{ left:0; } .slotR .pop{ right:0; }
+@keyframes popin{ from{ opacity:0; transform:translateY(-6px) scale(.98); } }
+.pophead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:17px; }
+.x{ width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:#fff; font:inherit; cursor:pointer; }
+.empty{ padding:22px 8px; }
+.olist{ display:grid; gap:8px; max-height:min(50vh,420px); overflow:auto; }
+.orow{ background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:10px 12px; display:grid; gap:8px; }
+.o1{ display:flex; justify-content:space-between; gap:8px; }
+.o1 span{ color:var(--mut); font-size:13px; white-space:nowrap; }
+.o2{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.stepper{ display:inline-flex; align-items:center; background:#0e0b15; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.sb{ width:34px; height:34px; border:0; background:none; color:#fff; font:inherit; font-size:18px; cursor:pointer; }
+.sb:hover{ background:rgba(255,255,255,.08); }
+.qin{ width:46px; height:34px; border:0; background:none; color:#fff; font:inherit; font-weight:700; text-align:center; appearance:textfield; -moz-appearance:textfield; }
+.qin::-webkit-outer-spin-button,.qin::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+.lnk{ background:none; border:0; color:var(--mut); font:inherit; font-size:13px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:6px; }
+.del{ margin-left:auto; font:inherit; font-size:13px; font-weight:700; color:#ffd6de; background:rgba(255,90,110,.12); border:1px solid rgba(255,90,110,.45); border-radius:10px; padding:7px 11px; min-height:36px; cursor:pointer; }
+.del:hover{ background:rgba(255,90,110,.24); }
+.ofoot{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.ofoot b{ font-size:22px; color:var(--pink); }
+.obtns{ display:flex; gap:8px; margin-top:12px; }
+.obtns .btn{ flex:1; margin:0; }
+.profTop{ display:flex; gap:14px; align-items:center; }
+.av.big{ width:68px; height:68px; font-size:26px; cursor:pointer; position:relative; }
+.av.big::after{ content:"Ändern"; position:absolute; inset:auto 0 0; background:rgba(0,0,0,.6); font-size:11px; font-weight:600; padding:3px 0; opacity:0; transition:opacity .15s; }
+.av.big:hover::after,.av.big:focus-visible::after{ opacity:1; }
+.profRow{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.profRow .btn,.profBtns .btn{ margin:0; }
+.profBtns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.profBtns .danger{ grid-column:1/-1; }
+.pop hr{ margin:14px 0; }
+
+/* Tabs */
+.tabs{
+  position:sticky; top:8px; z-index:20; width:fit-content; max-width:100%; margin:22px auto 18px; overflow-x:auto;
+  flex-wrap:nowrap; gap:4px; padding:5px; background:rgba(15,11,22,.75); border:1px solid var(--line);
+  border-radius:999px; backdrop-filter:blur(14px);
+}
+.tabs .chip{ background:transparent; border-color:transparent; color:var(--mut); white-space:nowrap; font-size:15px; padding:9px 18px; }
+.tabs .chip:hover{ color:#fff; }
+.tabs .chip.on{ background:linear-gradient(135deg,var(--pink),#a21caf); color:#fff; box-shadow:0 8px 24px -8px var(--pink); }
+
+/* Klick-Menge */
+.klick{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; }
+.klick h3{ margin:0; }
+.step-buttons{ margin:0; display:inline-flex; gap:4px; padding:5px; background:#0e0b15; border:1px solid var(--line); border-radius:16px; }
+.step-buttons .btn,.step-buttons .btn.off{ margin:0; min-height:40px; background:transparent; border:0; color:var(--mut); border-radius:12px; }
+.step-buttons .btn.on{ background:linear-gradient(135deg,var(--pink),#a21caf); color:#fff; box-shadow:0 8px 24px -8px var(--pink); }
+
+/* Produktkacheln */
+.grid{ grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+.item{
+  background:var(--card); border-radius:16px; padding:14px 52px 14px 16px; min-height:88px;
+  display:flex; flex-direction:column; justify-content:space-between; gap:8px;
+  transition:transform .12s, border-color .15s, box-shadow .15s, background .15s;
+}
+.item:hover{ transform:translateY(-2px); background:var(--card2); box-shadow:0 14px 30px -16px rgba(255,43,214,.8); }
+.item:active{ transform:scale(.97); }
+.item.has{ background:linear-gradient(160deg,rgba(255,43,214,.2),var(--card) 70%); box-shadow:0 0 0 1px rgba(255,43,214,.35) inset; }
+.count{ right:12px; bottom:10px; min-width:34px; text-align:center; padding:2px 9px; border-radius:999px; background:rgba(255,255,255,.07); font-size:15px; }
+.item.has .count{ background:var(--pink); color:#fff; }
+.minus{ border-radius:50%; width:32px; height:32px; top:10px; right:10px; background:rgba(255,255,255,.06); }
+
+@media (max-width:760px){
+  .hero{ grid-template-columns:1fr 1fr; grid-template-areas:"l r" "c c"; }
+  .slotL{ grid-area:l; } .slotR{ grid-area:r; } .heroC{ grid-area:c; }
+  .osum{ display:none; }
+  .klick{ justify-content:center; }
+}
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; } }
 </style>
 </head>
 
 <body>
-<button class="gear" id="gearBtn" type="button" aria-label="Einstellungen" title="Einstellungen">⚙️</button>
-<div id="overlayLayer" aria-hidden="true"></div>
+<div class="app">
 
-<dialog id="settingsDlg" aria-labelledby="setTitle">
-  <h3 id="setTitle">⚙️ Einstellungen</h3>
-  <p class="hint">Gilt nur für dieses Gerät und bleibt gespeichert.</p>
-
-  <div class="setsec">
-    <h4>Darstellung</h4>
-    <div class="seg" id="setTheme" role="group" aria-label="Hell oder Dunkel"></div>
+<header class="hero">
+  <!-- Links: aktuelle Bestellung -->
+  <div class="slot slotL appOnly" hidden>
+    <button class="pill" id="orderBtn" type="button" aria-expanded="false" aria-controls="orderPop">
+      <span aria-hidden="true">🛍️</span><span>Bestellung</span><span class="cnt zero" id="orderCnt">0</span><span class="osum" id="orderSum">0 €</span>
+    </button>
+    <section class="pop" id="orderPop" hidden aria-label="Aktuelle Bestellung">
+      <div class="pophead"><b>Aktuelle Bestellung</b><button class="x" id="orderClose" type="button" aria-label="Schließen">✕</button></div>
+      <div id="orderList"></div>
+    </section>
   </div>
 
-  <div class="setsec">
-    <h4>Fest-Overlay</h4>
-    <div class="optgrid" id="setOverlay" role="group" aria-label="Fest-Overlay auswählen"></div>
-  </div>
-
-  <div class="setsec">
-    <h4>Spaß</h4>
-    <div class="setrow">
-      <label for="funSwitch">🎉 Spaß-Modus (Klick aufs Logo = Überraschung)</label>
-      <label class="switch"><input type="checkbox" id="funSwitch" role="switch" aria-label="Spaß-Modus"><span class="sw"></span></label>
+  <div class="heroC">
+    <h2>CLUB 77 • Kassensystem</h2>
+    <!-- Großes Logo -->
+    <div class="logo-container">
+      <img src="https://i.postimg.cc/C5BCPFCd/image.png" alt="CLUB 77 Logo">
     </div>
   </div>
 
-  <div class="dlgfoot"><button class="btn" id="setClose" type="button">Fertig</button></div>
-</dialog>
-<div class="app">
-
-<h2>CLUB 77 • Kassensystem</h2>
-
-<!-- Großes Logo -->
-<div class="logo-container">
-  <img src="https://i.postimg.cc/C5BCPFCd/image.png" alt="CLUB 77 Logo">
-</div>
+  <!-- Rechts: ausklappbares Profil -->
+  <div class="slot slotR appOnly" hidden>
+    <button class="pill" id="profBtn" type="button" aria-expanded="false" aria-controls="profPop">
+      <span class="av" id="avSmall"></span><span id="profName"></span><span aria-hidden="true">▾</span>
+    </button>
+    <section class="pop" id="profPop" hidden aria-label="Profil">
+      <div class="profTop">
+        <button class="av big" id="avBig" type="button" title="Profilbild ändern" aria-label="Profilbild ändern"></button>
+        <div>
+          <div class="who"><span id="whoName"></span></div>
+          <span class="badge" id="whoRole" style="margin:6px 0 0"></span>
+        </div>
+      </div>
+      <input type="file" id="avFile" accept="image/*" hidden>
+      <div class="profRow">
+        <button class="btn off sm" id="avPick" type="button">📷 Profilbild wählen</button>
+        <button class="btn off sm" id="avDel" type="button" hidden>Entfernen</button>
+      </div>
+      <div class="msg" id="avMsg" role="status"></div>
+      <hr>
+      <div class="profBtns">
+        <button class="btn off sm" id="discordBtn" hidden>💬 Discord verknüpfen</button>
+        <button class="btn off sm" id="changePwBtn">🔑 Passwort ändern</button>
+        <button class="btn danger sm" id="logoutBtn">🚪 Abmelden</button>
+      </div>
+    </section>
+  </div>
+</header>
 
 <!-- ===== ANMELDUNG ===== -->
 <div class="card login" id="loginView" hidden>
@@ -630,16 +633,7 @@ dialog h3{ margin-bottom:6px; }
 <!-- ===== HAUPTANWENDUNG ===== -->
 <div id="appView" hidden>
 
-<div class="card topbar">
-  <div class="who">👤 <span id="whoName"></span><span class="badge" id="whoRole"></span></div>
-  <div>
-    <button class="btn off sm" id="discordBtn" hidden>💬 Discord verknüpfen</button>
-    <button class="btn off sm" id="changePwBtn">🔑 Passwort ändern</button>
-    <button class="btn off sm" id="logoutBtn">🚪 Abmelden</button>
-  </div>
-</div>
-
-<div class="tabs" id="tabs" style="margin:18px 0">
+<div class="tabs" id="tabs">
   <button class="chip on" data-tab="kasse">🧾 Kasse</button>
   <button class="chip" data-tab="invoices" id="tabInvoices">📄 Meine Rechnungen</button>
   <button class="chip" data-tab="products" id="tabProducts" hidden>🏷️ Produkte</button>
@@ -650,7 +644,7 @@ dialog h3{ margin-bottom:6px; }
 <div id="kasseView" style="display:grid;gap:18px">
 
 <!-- ===== SCHRITTWEITE AUSWAHL ===== -->
-<div class="card">
+<div class="card klick">
   <h3>🧮 Klick-Menge wählen</h3>
   <div class="step-buttons">
     <button class="btn on" data-step="1">1 pro Klick</button>
@@ -702,7 +696,6 @@ dialog h3{ margin-bottom:6px; }
     <div class="field"><label for="fQ">Suche</label><input id="fQ" class="input q" placeholder="Rechnungsnr. oder Produkt" maxlength="60"></div>
     <div class="field"><button class="chip" id="fToday">Heute</button></div>
     <div class="field"><button class="chip" id="fAll">Alle</button></div>
-    <div class="field" id="stornoDelWrap" hidden><button class="chip" id="stornoDelBtn" type="button">🗑️ Stornos löschen</button></div>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th>Nummer</th><th>Datum / Uhrzeit</th><th>Kassierer</th><th class="num">Artikel</th><th class="num">Betrag</th><th>Status</th></tr></thead>
@@ -711,28 +704,6 @@ dialog h3{ margin-bottom:6px; }
   <div style="text-align:center;margin-top:10px">
     <span class="hint" id="invCount"></span><br>
     <button class="btn off sm" id="invMore" hidden>Mehr laden</button>
-  </div>
-</div>
-
-<!-- Nur Administratoren: Stornobuchungen auswählen und löschen -->
-<div class="card" id="stornoDelCard" hidden>
-  <h3>🗑️ Stornos löschen</h3>
-  <p class="hint">Wähle zuerst aus, <b>von wem</b> die Stornos stammen, zeige sie an und hake die gewünschten Stornos an. Gelöschte Stornos können nicht wiederhergestellt werden. Die ursprüngliche Rechnung zählt danach wieder als nicht storniert.</p>
-  <div class="filters">
-    <div class="field"><label for="sdFrom">Von</label><input id="sdFrom" class="input" type="date"></div>
-    <div class="field"><label for="sdTo">Bis</label><input id="sdTo" class="input" type="date"></div>
-    <div class="field"><label for="sdCashier">Rechnung von (Kassierer)</label><select id="sdCashier" class="input"></select></div>
-    <div class="field"><label for="sdBy">Storno gebucht von</label><select id="sdBy" class="input"></select></div>
-    <div class="field"><button class="btn sm" id="sdShow" type="button">Stornos anzeigen</button></div>
-  </div>
-  <div class="tablewrap"><table>
-    <thead><tr><th><input type="checkbox" id="sdAll" aria-label="Alle auswählen"></th><th>Storno</th><th>Datum / Uhrzeit</th><th>zu Rechnung</th><th>Kassierer</th><th>Gebucht von</th><th class="num">Betrag</th><th>Grund</th></tr></thead>
-    <tbody id="sdBody"></tbody>
-  </table></div>
-  <div style="text-align:center;margin-top:10px">
-    <span class="hint" id="sdInfo"></span><br>
-    <button class="btn danger" id="sdDelete" type="button" disabled>🗑️ Ausgewählte löschen</button>
-    <div class="hint" id="sdMsg" role="status"></div>
   </div>
 </div>
 </div>
@@ -813,7 +784,6 @@ dialog h3{ margin-bottom:6px; }
 
 <dialog id="dlg"></dialog>
 
-<script src="/settings.js"></script>
 <script src="/app.js"></script>
 <script src="/pwa.js"></script>
 </body>
