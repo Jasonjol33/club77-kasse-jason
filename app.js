@@ -62,6 +62,8 @@
   const VIEWS = ['loginView', 'setupView', 'pwView', 'appView'];
   function showOnly(id) {
     for (const v of VIEWS) $('#' + v).hidden = v !== id;
+    $$('.appOnly').forEach(el => { el.hidden = id !== 'appView'; });
+    closePops();
     if (id === 'pwView') {
       $('#pwLogout').textContent = state.pwForced ? 'Abmelden' : 'Abbrechen';
       $('#pwMsg').textContent = '';
@@ -206,6 +208,9 @@
     state.pwForced = false;
     const admin = user.role === 'admin';
     $('#whoName').textContent = user.username;
+    $('#profName').textContent = user.username;
+    setMsg('#avMsg', '');
+    renderAvatars();
     const badge = $('#whoRole');
     badge.textContent = admin ? 'Administrator' : 'Mitarbeiter';
     badge.className = 'badge' + (admin ? ' admin' : '');
@@ -309,7 +314,124 @@
     if (d > 0) sumEl.append(h('small', null, '(−' + fmt(d) + ' € Rabatt)'));
     $$('.chip[data-v]').forEach(c => c.classList.toggle('on', Number(c.dataset.v) === r));
     state.requestId = uuid(); // geänderter Warenkorb = neue Anfrage-ID
+    syncOrder(t - d, d);
   }
+
+  /* ============================================================ Aufklapp-Blätter (Bestellung / Profil) */
+  const popBtns = [['#orderBtn', '#orderPop'], ['#profBtn', '#profPop']];
+  function closePops() {
+    for (const [b, p] of popBtns) { $(p).hidden = true; $(b).setAttribute('aria-expanded', 'false'); }
+  }
+  for (const [b, p] of popBtns) {
+    $(b).addEventListener('click', e => {
+      e.stopPropagation();
+      const open = $(p).hidden;
+      closePops();
+      $(p).hidden = !open;
+      $(b).setAttribute('aria-expanded', String(open));
+      if (open && p === '#orderPop') renderOrder();
+    });
+    $(p).addEventListener('click', e => e.stopPropagation());
+  }
+  document.addEventListener('click', closePops);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePops(); });
+  $('#orderClose').addEventListener('click', closePops);
+
+  /* ============================================================ Aktuelle Bestellung: Einzelpositionen mit Teilmenge entfernen */
+  const removeQty = new Map(); // Produktname -> gewählte Menge zum Entfernen
+  let orderTotals = { total: 0, discount: 0 };
+
+  function syncOrder(total, discount) {
+    orderTotals = { total, discount };
+    let n = 0;
+    for (const q of state.cart.values()) n += q;
+    $('#orderCnt').textContent = fmt(n);
+    $('#orderCnt').classList.toggle('zero', n === 0);
+    $('#orderSum').textContent = eur(total);
+    if (!$('#orderPop').hidden) renderOrder();
+  }
+
+  function renderOrder() {
+    const box = $('#orderList');
+    box.textContent = '';
+    for (const k of [...removeQty.keys()]) if (!state.cart.has(k)) removeQty.delete(k);
+    if (state.cart.size === 0) {
+      box.append(h('div', { class: 'empty hint', style: 'text-align:center' }, 'Noch nichts in der Bestellung.', h('br'), 'Tippe auf ein Produkt, um es hinzuzufügen.'));
+      return;
+    }
+    const list = h('div', { class: 'olist' });
+    for (const [name, q] of state.cart) {
+      const price = (state.products.get(name) || { price: 0 }).price;
+      const clamp = v => Math.max(1, Math.min(q, Math.round(Number(v)) || 1));
+      const start = clamp(removeQty.get(name) || state.step);
+      removeQty.set(name, start);
+      const input = h('input', { class: 'qin', type: 'number', min: '1', max: String(q), value: String(start), inputmode: 'numeric', 'aria-label': name + ': Menge zum Entfernen' });
+      const del = h('button', { class: 'del', type: 'button' }, '🗑️ ' + start + ' entfernen');
+      const label = k => { del.textContent = '🗑️ ' + k + ' entfernen'; };
+      const setN = v => { const k = clamp(v); removeQty.set(name, k); input.value = String(k); label(k); };
+      input.addEventListener('input', () => { if (input.value !== '') { const k = clamp(input.value); removeQty.set(name, k); label(k); } });
+      input.addEventListener('change', () => setN(input.value));
+      del.addEventListener('click', () => addQty(name, -clamp(input.value)));
+      list.append(h('div', { class: 'orow' },
+        h('div', { class: 'o1' }, h('b', null, name), h('span', null, q + '× · ' + eur(q * price))),
+        h('div', { class: 'o2' },
+          h('div', { class: 'stepper' },
+            h('button', { class: 'sb', type: 'button', 'aria-label': 'Weniger', onclick: () => setN(Number(input.value) - 1) }, '−'),
+            input,
+            h('button', { class: 'sb', type: 'button', 'aria-label': 'Mehr', onclick: () => setN(Number(input.value) + 1) }, '+')),
+          h('button', { class: 'lnk', type: 'button', onclick: () => setN(q) }, 'Alle ' + fmt(q)),
+          del)));
+    }
+    box.append(list,
+      h('div', { class: 'ofoot' },
+        h('span', { class: 'hint' }, orderTotals.discount > 0 ? '(−' + fmt(orderTotals.discount) + ' € Rabatt)' : ''),
+        h('b', null, 'Gesamt: ' + eur(orderTotals.total))),
+      h('div', { class: 'obtns' },
+        h('button', { class: 'btn danger sm', type: 'button', onclick: () => { if (confirm('Gesamte Bestellung leeren?')) { state.cart.clear(); update(); } } }, 'Alles leeren'),
+        h('button', { class: 'btn', type: 'button', onclick: () => { closePops(); $('#sendBon').click(); } }, '🧾 Bon senden')));
+  }
+
+  /* ============================================================ Profilbild (wird nur auf diesem Gerät gespeichert) */
+  const avKey = () => 'club77-avatar-' + (state.user ? state.user.id : '0');
+  function getAvatar() {
+    try { const v = localStorage.getItem(avKey()); return v && v.startsWith('data:image/jpeg;base64,') ? v : ''; } catch { return ''; }
+  }
+  function renderAvatars() {
+    const src = getAvatar();
+    const initial = state.user ? state.user.username.trim().charAt(0).toUpperCase() : '?';
+    for (const sel of ['#avSmall', '#avBig']) {
+      const el = $(sel);
+      el.textContent = '';
+      if (src) el.append(h('img', { src, alt: '' })); else el.append(initial);
+    }
+    $('#avDel').hidden = !src;
+  }
+  $('#avPick').addEventListener('click', () => $('#avFile').click());
+  $('#avBig').addEventListener('click', () => $('#avFile').click());
+  $('#avFile').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    if (!f.type.startsWith('image/')) return setMsg('#avMsg', 'Bitte eine Bilddatei wählen.');
+    if (f.size > 10 * 1024 * 1024) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 10 MB).');
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const S = 192, m = Math.min(img.width, img.height);
+      const c = document.createElement('canvas');
+      c.width = c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      localStorage.setItem(avKey(), c.toDataURL('image/jpeg', 0.85));
+      setMsg('#avMsg', 'Profilbild gespeichert ✔', false);
+      renderAvatars();
+    } catch { setMsg('#avMsg', 'Das Bild konnte nicht gespeichert werden.'); }
+    finally { URL.revokeObjectURL(url); }
+  });
+  $('#avDel').addEventListener('click', () => {
+    try { localStorage.removeItem(avKey()); } catch { /* Speicher nicht verfügbar */ }
+    setMsg('#avMsg', '');
+    renderAvatars();
+  });
 
   function resetCart() {
     state.cart.clear();
