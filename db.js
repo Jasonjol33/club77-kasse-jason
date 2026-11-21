@@ -117,7 +117,7 @@ CREATE TABLE session_revocations (token_hash TEXT PRIMARY KEY, reason TEXT NOT N
 `;
 
 const SCHEMA_V6 = `
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   name_lower TEXT NOT NULL UNIQUE,
@@ -142,13 +142,21 @@ function openDatabase(dataDir) {
   let version = db.prepare('PRAGMA user_version').get().user_version;
   if (version > 7) throw new Error('Unbekannte Datenbankversion ' + version);
   const steps = [[0, SCHEMA_V1, 1], [1, SCHEMA_V2, 2], [2, SCHEMA_V3, 3], [3, SCHEMA_V4, 4], [4, SCHEMA_V5, 5], [5, SCHEMA_V6, 6], [6, SCHEMA_V7, 7]];
+  const hasCol = (table, col) => db.prepare('PRAGMA table_info(' + table + ')').all().some(c => c.name === col);
   for (const [from, sql, to] of steps) {
     if (version !== from) continue;
     db.exec('BEGIN IMMEDIATE');
-    try { db.exec(sql); db.exec('PRAGMA user_version=' + to); db.exec('COMMIT'); }
+    try {
+      // V7 ist idempotent: die Spalte existiert evtl. schon (z. B. durch eine frühere Profilbild-Version)
+      if (to === 7 && hasCol('users', 'avatar')) { /* nichts zu tun */ } else db.exec(sql);
+      db.exec('PRAGMA user_version=' + to); db.exec('COMMIT');
+    }
     catch (e) { db.exec('ROLLBACK'); throw e; }
     version = to;
   }
+  // Absicherung für vermischte Versionsstände: fehlende Teile idempotent nachziehen
+  if (!hasCol('users', 'avatar')) db.exec('ALTER TABLE users ADD COLUMN avatar TEXT');
+  db.exec(SCHEMA_V6);
   return { db, file };
 }
 
