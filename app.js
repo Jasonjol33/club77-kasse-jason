@@ -429,27 +429,39 @@
   }
   $('#avPick').addEventListener('click', () => $('#avFile').click());
   $('#avBig').addEventListener('click', () => $('#avFile').click());
+  const AV_MAX = 1024 * 1024 * 1024; // 1 GB Originaldatei; gespeichert wird immer nur ein kleines 160×160-JPEG
+  // createImageBitmap liest die Datei direkt (kein blob:-/data:-Umweg, passt zur CSP und spart Speicher)
+  async function decodeImage(f) {
+    if (window.createImageBitmap) {
+      try { const bmp = await createImageBitmap(f); return { src: bmp, w: bmp.width, h: bmp.height, done: () => bmp.close() }; } catch { /* Fallback unten */ }
+    }
+    const dataUrl = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(f); });
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = dataUrl; });
+    return { src: img, w: img.width, h: img.height, done() {} };
+  }
   $('#avFile').addEventListener('change', async e => {
     const f = e.target.files[0];
     e.target.value = '';
     if (!f) return;
-    if (!f.type.startsWith('image/')) return setMsg('#avMsg', 'Bitte eine Bilddatei wählen.');
-    if (f.size > 15 * 1024 * 1024) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 15 MB).');
+    if (f.size > AV_MAX) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 1 GB).');
+    setMsg('#avMsg', 'Bild wird verarbeitet …', false);
+    let dec;
     try {
-      // data:-URL statt blob: – die CSP erlaubt nur 'self', postimg und data:
-      const dataUrl = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(f); });
-      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = dataUrl; });
-      const S = 160, m = Math.min(img.width, img.height);
+      dec = await decodeImage(f);
+      const S = 160, m = Math.min(dec.w, dec.h);
       const c = document.createElement('canvas');
       c.width = c.height = S;
       const cx = c.getContext('2d');
       cx.fillStyle = '#15111d'; cx.fillRect(0, 0, S, S); // Transparenz (PNG) -> dunkler Hintergrund
-      cx.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      cx.imageSmoothingQuality = 'high';
+      cx.drawImage(dec.src, (dec.w - m) / 2, (dec.h - m) / 2, m, m, 0, 0, S, S);
       const r = await api('/api/me/avatar', { method: 'POST', body: { avatar: c.toDataURL('image/jpeg', 0.82) } });
       state.user.avatar = r.avatar;
       setMsg('#avMsg', 'Profilbild gespeichert ✔', false);
       renderAvatars();
-    } catch (err) { setMsg('#avMsg', err instanceof ApiError ? err.message : 'Das Bild konnte nicht gelesen werden.'); }
+    } catch (err) {
+      setMsg('#avMsg', err instanceof ApiError ? err.message : 'Das Bild konnte nicht gelesen werden. Bitte JPG, PNG oder WebP verwenden (HEIC/RAW werden nicht von jedem Browser unterstützt).');
+    } finally { if (dec) dec.done(); }
   });
   $('#avDel').addEventListener('click', async () => {
     try {
