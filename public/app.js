@@ -318,7 +318,7 @@
   }
 
   /* ============================================================ Aufklapp-Blätter (Bestellung / Profil) */
-  const popBtns = [['#orderBtn', '#orderPop'], ['#profBtn', '#profPop']];
+  const popBtns = [['#gearBtn', '#setPop'], ['#orderBtn', '#orderPop'], ['#profBtn', '#profPop']];
   function closePops() {
     for (const [b, p] of popBtns) { $(p).hidden = true; $(b).setAttribute('aria-expanded', 'false'); }
   }
@@ -330,12 +330,37 @@
       $(p).hidden = !open;
       $(b).setAttribute('aria-expanded', String(open));
       if (open && p === '#orderPop') renderOrder();
+      if (open && p === '#setPop') renderSettings();
     });
     $(p).addEventListener('click', e => e.stopPropagation());
   }
   document.addEventListener('click', closePops);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePops(); });
   $('#orderClose').addEventListener('click', closePops);
+  $('#setClose').addEventListener('click', closePops);
+
+  /* ============================================================ Einstellungen: Events (Overlays aus fx.js) */
+  function renderSettings() {
+    const FX = window.CLUB77_FX, box = $('#setBody');
+    box.textContent = '';
+    if (!FX) { box.append(h('p', { class: 'hint' }, 'Events konnten nicht geladen werden.')); return; }
+    const cur = FX.get();
+    $('#gearBtn').classList.toggle('live', cur.id !== 'off');
+    if (FX.reduced) box.append(h('p', { class: 'hint' }, 'Auf diesem Gerät sind Animationen reduziert – Events sind deaktiviert.'));
+    box.append(h('div', { class: 'setlab' }, 'Event'));
+    const grid = h('div', { class: 'evgrid' });
+    for (const e of FX.EVENTS) {
+      grid.append(h('button', { class: 'ev', type: 'button', 'aria-pressed': String(cur.id === e.id), onclick: () => { FX.setEvent(e.id); renderSettings(); } },
+        h('span', { class: 'evi', 'aria-hidden': 'true' }, e.icon), h('span', null, h('b', null, e.name), h('small', null, e.desc))));
+    }
+    box.append(grid, h('div', { class: 'setlab' }, 'Intensität'));
+    const lvl = h('div', { class: 'lvl' });
+    for (const l of FX.LEVELS) lvl.append(h('button', { type: 'button', 'aria-pressed': String(cur.lvl === l.id), onclick: () => { FX.setLevel(l.id); renderSettings(); } }, l.name));
+    box.append(lvl,
+      h('button', { class: 'btn funbtn', type: 'button', onclick: () => FX.burst() }, '🎉 Konfetti-Knall'),
+      h('p', { class: 'hint', style: 'margin:10px 0 0' }, 'Die Auswahl gilt nur für dieses Gerät.'));
+  }
+  renderSettings();
 
   /* ============================================================ Aktuelle Bestellung: Einzelpositionen mit Teilmenge entfernen */
   const removeQty = new Map(); // Produktname -> gewählte Menge zum Entfernen
@@ -391,13 +416,9 @@
         h('button', { class: 'btn', type: 'button', onclick: () => { closePops(); $('#sendBon').click(); } }, '🧾 Bon senden')));
   }
 
-  /* ============================================================ Profilbild (wird nur auf diesem Gerät gespeichert) */
-  const avKey = () => 'club77-avatar-' + (state.user ? state.user.id : '0');
-  function getAvatar() {
-    try { const v = localStorage.getItem(avKey()); return v && v.startsWith('data:image/jpeg;base64,') ? v : ''; } catch { return ''; }
-  }
+  /* ============================================================ Profilbild (wird auf dem Server gespeichert) */
   function renderAvatars() {
-    const src = getAvatar();
+    const src = (state.user && state.user.avatar) || '';
     const initial = state.user ? state.user.username.trim().charAt(0).toUpperCase() : '?';
     for (const sel of ['#avSmall', '#avBig']) {
       const el = $(sel);
@@ -413,24 +434,30 @@
     e.target.value = '';
     if (!f) return;
     if (!f.type.startsWith('image/')) return setMsg('#avMsg', 'Bitte eine Bilddatei wählen.');
-    if (f.size > 10 * 1024 * 1024) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 10 MB).');
-    const url = URL.createObjectURL(f);
+    if (f.size > 15 * 1024 * 1024) return setMsg('#avMsg', 'Das Bild ist zu groß (max. 15 MB).');
     try {
-      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
-      const S = 192, m = Math.min(img.width, img.height);
+      // data:-URL statt blob: – die CSP erlaubt nur 'self', postimg und data:
+      const dataUrl = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(f); });
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = dataUrl; });
+      const S = 160, m = Math.min(img.width, img.height);
       const c = document.createElement('canvas');
       c.width = c.height = S;
-      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
-      localStorage.setItem(avKey(), c.toDataURL('image/jpeg', 0.85));
+      const cx = c.getContext('2d');
+      cx.fillStyle = '#15111d'; cx.fillRect(0, 0, S, S); // Transparenz (PNG) -> dunkler Hintergrund
+      cx.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      const r = await api('/api/me/avatar', { method: 'POST', body: { avatar: c.toDataURL('image/jpeg', 0.82) } });
+      state.user.avatar = r.avatar;
       setMsg('#avMsg', 'Profilbild gespeichert ✔', false);
       renderAvatars();
-    } catch { setMsg('#avMsg', 'Das Bild konnte nicht gespeichert werden.'); }
-    finally { URL.revokeObjectURL(url); }
+    } catch (err) { setMsg('#avMsg', err instanceof ApiError ? err.message : 'Das Bild konnte nicht gelesen werden.'); }
   });
-  $('#avDel').addEventListener('click', () => {
-    try { localStorage.removeItem(avKey()); } catch { /* Speicher nicht verfügbar */ }
-    setMsg('#avMsg', '');
-    renderAvatars();
+  $('#avDel').addEventListener('click', async () => {
+    try {
+      await api('/api/me/avatar/delete', { method: 'POST', body: {} });
+      state.user.avatar = null;
+      setMsg('#avMsg', '');
+      renderAvatars();
+    } catch (err) { setMsg('#avMsg', err.message); }
   });
 
   function resetCart() {
