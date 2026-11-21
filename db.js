@@ -130,14 +130,18 @@ CREATE TABLE products (
 );
 `;
 
+const SCHEMA_V7 = `
+ALTER TABLE users ADD COLUMN avatar TEXT;
+`;
+
 function openDatabase(dataDir) {
   fs.mkdirSync(dataDir, { recursive: true });
   const file = path.join(dataDir, 'club77.db');
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
   let version = db.prepare('PRAGMA user_version').get().user_version;
-  if (version > 6) throw new Error('Unbekannte Datenbankversion ' + version);
-  const steps = [[0, SCHEMA_V1, 1], [1, SCHEMA_V2, 2], [2, SCHEMA_V3, 3], [3, SCHEMA_V4, 4], [4, SCHEMA_V5, 5], [5, SCHEMA_V6, 6]];
+  if (version > 7) throw new Error('Unbekannte Datenbankversion ' + version);
+  const steps = [[0, SCHEMA_V1, 1], [1, SCHEMA_V2, 2], [2, SCHEMA_V3, 3], [3, SCHEMA_V4, 4], [4, SCHEMA_V5, 5], [5, SCHEMA_V6, 6], [6, SCHEMA_V7, 7]];
   for (const [from, sql, to] of steps) {
     if (version !== from) continue;
     db.exec('BEGIN IMMEDIATE');

@@ -331,6 +331,7 @@ function authenticate(req) {
     id: row.id, username: row.username, role: row.role, active: !!row.active,
     mustChangePassword: !!row.must_change_password, tokenHash: hash,
     discordLinked: !!row.discord_id, discordName: row.discord_name || null, discordId: row.discord_id || null, via: row.via,
+    avatar: row.avatar || null,
   };
 }
 
@@ -365,6 +366,7 @@ const userDTO = u => ({
 const publicUser = u => ({
   id: u.id, username: u.username, role: u.role, mustChangePassword: !!u.mustChangePassword,
   discordLinked: !!(u.discordLinked ?? u.discord_id), discordName: u.discordName ?? u.discord_name ?? null,
+  avatar: u.avatar || null,
 });
 const config = () => ({
   timezone: TZ, dayStartHour: DAY_START_HOUR, maxStaffDiscount: MAX_STAFF_DISCOUNT, discord: discord.enabled, today: businessDay(),
@@ -810,6 +812,28 @@ route('POST', /^\/api\/me\/discord\/unlink$/, {}, ctx => {
 
 // ---- angemeldet
 route('GET', /^\/api\/me$/, { allowPwChange: true }, ctx => ctx.json(200, { user: publicUser(ctx.user), config: config() }));
+
+/* Profilbild: kleines JPEG (Data-URL), serverseitig streng geprüft */
+const AVATAR_PREFIX = 'data:image/jpeg;base64,';
+const AVATAR_MAX = 48 * 1024;
+route('POST', /^\/api\/me\/avatar$/, {}, async ctx => {
+  const body = await ctx.body();
+  const v = body.avatar;
+  if (typeof v !== 'string' || !v.startsWith(AVATAR_PREFIX) || v.length > AVATAR_MAX) throw bad('Ungültiges Profilbild (JPEG, max. 48 KB).');
+  const b64 = v.slice(AVATAR_PREFIX.length);
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64) || b64.length % 4 !== 0) throw bad('Ungültiges Profilbild.');
+  const buf = Buffer.from(b64, 'base64');
+  if (buf.length < 4 || buf[0] !== 0xFF || buf[1] !== 0xD8 || buf[2] !== 0xFF) throw bad('Das Profilbild ist kein gültiges JPEG.');
+  db.prepare('UPDATE users SET avatar=? WHERE id=?').run(v, ctx.user.id);
+  audit(ctx.user, 'avatar.set', null, ctx.ip);
+  ctx.json(200, { avatar: v });
+});
+
+route('POST', /^\/api\/me\/avatar\/delete$/, {}, ctx => {
+  db.prepare('UPDATE users SET avatar=NULL WHERE id=?').run(ctx.user.id);
+  audit(ctx.user, 'avatar.delete', null, ctx.ip);
+  ctx.json(200, { avatar: null });
+});
 
 route('POST', /^\/api\/me\/password$/, { allowPwChange: true }, async ctx => {
   const body = await ctx.body();
