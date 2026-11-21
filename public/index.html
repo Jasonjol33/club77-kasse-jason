@@ -526,6 +526,7 @@ h3{ font-size:18px; letter-spacing:.2px; }
 .gear{ width:46px; height:46px; flex:none; border-radius:50%; font-size:20px; line-height:1; cursor:pointer; position:relative; color:#fff; background:rgba(23,17,31,.85); border:1px solid var(--line); backdrop-filter:blur(10px); transition:border-color .15s, box-shadow .15s, transform .4s; }
 .gear:hover,.gear[aria-expanded="true"]{ border-color:var(--pink); box-shadow:0 0 18px rgba(255,43,214,.35); transform:rotate(45deg); }
 .gear.live::after{ content:""; position:absolute; top:2px; right:2px; width:11px; height:11px; border-radius:50%; background:var(--pink); box-shadow:0 0 10px var(--pink); }
+#setPop{ max-height:calc(100vh - 110px); overflow:auto; }
 #fxCanvas{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:25; mix-blend-mode:screen; }
 .setlab{ margin:14px 0 8px; font-weight:800; font-size:14px; color:var(--mut); }
 .setlab:first-child{ margin-top:0; }
